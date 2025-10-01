@@ -1,0 +1,105 @@
+name: almashe_game
+description: A fun endless runner game featuring the 3almashe character
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  shared_preferences: ^2.2.2
+  audioplayers: ^5.2.1
+  vibration: ^1.7.6
+  confetti: ^0.7.0
+  flutter_animate: ^4.1.1
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    # === الشخصيات الأساسية ===
+    - assets/images/characters/character_run.png
+    - assets/images/characters/character_jump.png
+    - assets/images/characters/character_duck.png
+    - assets/images/characters/character_attack.png
+
+    # === العوائق الأساسية ===
+    - assets/images/obstacles/pipe.png
+    - assets/images/obstacles/brick.png
+
+    # === الأعداء الأساسية ===
+    - assets/images/enemies/goomba.png
+    - assets/images/enemies/mushroom.png
+    - assets/images/enemies/koopa.png
+
+    # === الزعماء ===
+    - assets/images/bosses/boss1.png
+    - assets/images/bosses/boss2.png
+    - assets/images/bosses/boss3.png
+    - assets/images/bosses/boss4.png
+    - assets/images/bosses/boss5.png
+    - assets/images/bosses/rare_boss1.png
+    - assets/images/bosses/rare_boss2.png
+    - assets/images/bosses/rare_boss3.png
+    - assets/images/bosses/rare_boss4.png
+    - assets/images/bosses/rare_boss5.png
+    - assets/images/bosses/final_boss.png
+
+    # === الباور أب الأساسية ===
+    - assets/images/powerups/points.png
+    - assets/images/powerups/shield.png
+    - assets/images/powerups/health.png
+
+    # === الموارد الأساسية ===
+    - assets/images/resources/coin.png
+    - assets/images/resources/package.png
+
+    # === الخلفيات الأساسية ===
+    - assets/images/backgrounds/city.png
+    - assets/images/backgrounds/forest.png
+    - assets/images/backgrounds/desert.png
+
+    # === الواجهة الأساسية ===
+    - assets/images/ui/heart.png
+    - assets/images/ui/empty_heart.png
+    - assets/images/ui/play_button.png
+    - assets/images/ui/boss_health_bar.png
+
+    # === الأصوات الأساسية ===
+    - assets/sounds/effects/jump.wav
+    - assets/sounds/effects/coin.wav
+    - assets/sounds/effects/game_over.wav
+    - assets/sounds/effects/level_complete.wav
+    - assets/sounds/effects/enemy_die.wav
+    - assets/sounds/effects/boss_hit.wav
+    - assets/sounds/effects/package_throw.wav
+    - assets/sounds/effects/boss_defeat.wav
+    - assets/sounds/effects/enemy_hit.wav
+    - assets/sounds/music/background_music.mp3
+    - assets/sounds/music/boss_music.mp3
+
+    # === الأيقونة ===
+    - assets/icon/app_icon.png
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cairo-Regular.ttf
+          weight: 400
