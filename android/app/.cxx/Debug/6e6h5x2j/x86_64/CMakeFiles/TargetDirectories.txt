@@ -1,0 +1,2 @@
+C:/Users/yazan/Desktop/3almashe_game/android/app/.cxx/Debug/6e6h5x2j/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/yazan/Desktop/3almashe_game/android/app/.cxx/Debug/6e6h5x2j/x86_64/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="android.app" target="17" />
+      <module name="android.audioplayers_android" target="17" />
+      <module name="android.device_info_plus" target="17" />
+      <module name="android.path_provider_android" target="17" />
+      <module name="android.shared_preferences_android" target="17" />
+      <module name="android.unity_ads_plugin" target="17" />
+      <module name="android.vibration" target="17" />
+      <module name="com.rebeloid.unity_ads.android.unity_ads_plugin" target="17" />
+      <module name="gradle" target="17" />
+      <module name="gradle.main" target="11" />
+      <module name="gradle.test" target="11" />
+      <module name="io.flutter.plugins.sharedpreferences.android.shared_preferences_android" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
