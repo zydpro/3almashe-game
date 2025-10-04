@@ -188,7 +188,7 @@ class Character {
       y += verticalSpeed;
       verticalSpeed += gravity * weight;
 
-      // التحقق من الوصول للأرض مع تحسينات
+      // التحقق من الوصول للأرض مع التحسينات
       if (y >= groundY - height) {
         y = groundY - height;
         isJumping = false;
@@ -319,7 +319,7 @@ class Character {
     return characterRect.overlaps(packageRect);
   }
 
-  // دوال مساعدة للحصول على حدود الشخصية
+  // دوال مساعدة للحصول على حدود الشخصية الرئيسية
   Rect get boundingBox => Rect.fromLTWH(
     x - width / 2,
     y - height,
