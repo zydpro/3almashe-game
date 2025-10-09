@@ -11,12 +11,15 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.3.2
   audioplayers: ^5.2.1
-  vibration: ^1.7.6
+  vibration: ^3.1.4
   confetti: ^0.7.0
   flutter_animate: ^4.1.1
   provider: ^6.1.1
+  video_player: ^2.8.2
+  chewie: ^1.7.0
+  unity_ads_plugin: ^0.3.27
 
 dev_dependencies:
   flutter_test:
@@ -41,11 +44,13 @@ flutter:
     # === العوائق الأساسية ===
     - assets/images/obstacles/pipe.png
     - assets/images/obstacles/brick.png
+    - assets/images/platforms/platform.png
 
     # === الأعداء الأساسية ===
     - assets/images/enemies/goomba.png
     - assets/images/enemies/mushroom.png
     - assets/images/enemies/koopa.png
+    - assets/images/enemies/flying_enemy.png
 
     # === الزعماء ===
     - assets/images/bosses/boss1.png
@@ -79,6 +84,17 @@ flutter:
     - assets/images/ui/empty_heart.png
     - assets/images/ui/play_button.png
     - assets/images/ui/boss_health_bar.png
+
+    # === الواجهة الرئيسية ===
+    - assets/images/main_menu/levels_icon.png
+    - assets/images/main_menu/play_icon.png
+    - assets/images/main_menu/store_icon.png
+    - assets/images/main_menu/about_icon.png
+    - assets/images/main_menu/settings_icon.png
+    - assets/images/main_menu/like_icon.png
+    - assets/images/main_menu/share_icon.png
+    - assets/images/main_menu/fallback_pattern.png
+    - assets/images/main_menu/menu_background.mp4
 
     # === الأصوات الأساسية ===
     - assets/sounds/effects/jump.wav

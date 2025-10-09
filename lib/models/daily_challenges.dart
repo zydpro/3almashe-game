@@ -37,7 +37,7 @@ class ChallengeManager {
         title: 'قفز 50 مرة',
         description: 'اقفز 50 مرة خلال جلسة واحدة',
         target: 50,
-        reward: 100,
+        reward: 10,
         type: ChallengeType.jumps,
       ),
       DailyChallenge(
@@ -45,7 +45,7 @@ class ChallengeManager {
         title: 'اجمع 20 عملة',
         description: 'اجمع 20 عملة ذهبية',
         target: 20,
-        reward: 150,
+        reward: 10,
         type: ChallengeType.coins,
       ),
       DailyChallenge(
@@ -53,7 +53,7 @@ class ChallengeManager {
         title: 'تجنب 30 عقبة',
         description: 'تجنب 30 عقبة بدون اصطدام',
         target: 30,
-        reward: 200,
+        reward: 5,
         type: ChallengeType.obstacles,
       ),
       DailyChallenge(
@@ -61,7 +61,7 @@ class ChallengeManager {
         title: 'احصل على 5 باور أب',
         description: 'اجمع 5 باور أب مختلفة',
         target: 5,
-        reward: 120,
+        reward: 5,
         type: ChallengeType.powerUps,
       ),
     ];

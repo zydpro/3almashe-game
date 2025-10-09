@@ -324,7 +324,9 @@ class _LevelsScreenState extends State<LevelsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GameScreen(levelData: level),
+        // builder: (context) => GameScreen(levelData: level),
+        builder: (context) => GameScreen(), // بدون levelData مؤقتاً
+
       ),
     );
   }

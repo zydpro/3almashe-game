@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="Gradle: androidx.window:window:1.2.0@aar" external-system-id="GRADLE">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/8.9/transforms/0120d634791013deed9fcc8d38d9e256/transformed/jetified-window-1.2.0/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/8.9/transforms/0120d634791013deed9fcc8d38d9e256/transformed/jetified-window-1.2.0/res" />
-      <root url="file://$USER_HOME$/.gradle/caches/8.9/transforms/0120d634791013deed9fcc8d38d9e256/transformed/jetified-window-1.2.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/8.9/transforms/aa40472e14e6cb17bc0877bba4ea954b/transformed/jetified-window-1.2.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.9/transforms/aa40472e14e6cb17bc0877bba4ea954b/transformed/jetified-window-1.2.0/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/8.9/transforms/aa40472e14e6cb17bc0877bba4ea954b/transformed/jetified-window-1.2.0/AndroidManifest.xml" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

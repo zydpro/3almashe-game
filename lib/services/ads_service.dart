@@ -1,91 +1,104 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:unity_ads_plugin/unity_ads_plugin.dart';
 
 class AdsService {
   static bool _isInitialized = false;
   static bool _isRewardedAdReady = false;
   static bool _isInterstitialAdReady = false;
-  static bool _isBannerAdReady = false;
+
+  // ⚠️ استبدل هذه بمعرفات حسابك الحقيقية
+  static const String _androidGameId = '5851831';
+  static const String _iosGameId = '5851830';
+  static const bool _testMode = true;
+
+  // ⚠️ استبدل هذه بمعرفات الـ Placements من حسابك
+  static const String _rewardedPlacementId = 'Rewarded_Android';
+  static const String _interstitialPlacementId = 'Interstitial_Android';
+
+  static Completer<void>? _initializationCompleter;
 
   static Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      print('✅ Unity Ads already initialized');
+      return;
+    }
+
+    if (_initializationCompleter != null) {
+      await _initializationCompleter!.future;
+      return;
+    }
+
+    _initializationCompleter = Completer<void>();
+
+    print('🎮 Starting Unity_ads_plugin initialization...');
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      // التهيئة الصحيحة حسب التوثيق
+      UnityAds.init(
+        gameId: _androidGameId,
+        testMode: _testMode,
+        onComplete: () {
+          _isInitialized = true;
+          print('✅ Unity_ads_plugin initialization SUCCESS');
+          _loadAds();
+          _initializationCompleter?.complete();
+        },
+        onFailed: (error, message) {
+          _isInitialized = false;
+          print('❌ Unity_ads_plugin initialization FAILED: $error - $message');
+          _initializationCompleter?.completeError('$error: $message');
+        },
+      );
 
-      _isInitialized = true;
-      _loadRewardedAd();
-      _loadInterstitialAd();
-      _loadBannerAd();
-
-      if (kDebugMode) {
-        print('Unity Ads initialized successfully');
-      }
     } catch (e) {
-      if (kDebugMode) {
-        print('Failed to initialize Unity Ads: $e');
-      }
+      print('❌ Exception during Unity_ads_plugin initialization: $e');
+      _isInitialized = false;
+      _initializationCompleter?.completeError(e);
+      _initializationCompleter = null;
     }
   }
 
-  static Future<void> _loadRewardedAd() async {
-    try {
-      await Future.delayed(const Duration(seconds: 2));
-      _isRewardedAdReady = true;
+  static void _loadAds() {
+    print('📦 Loading ads...');
 
-      if (kDebugMode) {
-        print('Rewarded ad loaded');
-      }
-    } catch (e) {
-      _isRewardedAdReady = false;
-      if (kDebugMode) {
-        print('Failed to load rewarded ad: $e');
-      }
-    }
-  }
+    // تحميل الإعلانات
+    UnityAds.load(
+      placementId: _rewardedPlacementId,
+      onComplete: (placementId) {
+        _isRewardedAdReady = true;
+        print('✅ Rewarded ad loaded: $placementId');
+      },
+      onFailed: (placementId, error, message) {
+        _isRewardedAdReady = false;
+        print('❌ Rewarded ad load failed: $placementId - $error - $message');
+      },
+    );
 
-  static Future<void> _loadInterstitialAd() async {
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-      _isInterstitialAdReady = true;
-
-      if (kDebugMode) {
-        print('Interstitial ad loaded');
-      }
-    } catch (e) {
-      _isInterstitialAdReady = false;
-      if (kDebugMode) {
-        print('Failed to load interstitial ad: $e');
-      }
-    }
-  }
-
-  static Future<void> _loadBannerAd() async {
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-      _isBannerAdReady = true;
-
-      if (kDebugMode) {
-        print('Banner ad loaded');
-      }
-    } catch (e) {
-      _isBannerAdReady = false;
-      if (kDebugMode) {
-        print('Failed to load banner ad: $e');
-      }
-    }
+    UnityAds.load(
+      placementId: _interstitialPlacementId,
+      onComplete: (placementId) {
+        _isInterstitialAdReady = true;
+        print('✅ Interstitial ad loaded: $placementId');
+      },
+      onFailed: (placementId, error, message) {
+        _isInterstitialAdReady = false;
+        print('❌ Interstitial ad load failed: $placementId - $error - $message');
+      },
+    );
   }
 
   static bool isRewardedAdReady() {
-    return _isRewardedAdReady;
+    final isReady = _isInitialized && _isRewardedAdReady;
+    print('🔍 Rewarded ad status: $isReady');
+    return isReady;
   }
 
   static bool isInterstitialAdReady() {
-    return _isInterstitialAdReady;
-  }
-
-  static bool isBannerAdReady() {
-    return _isBannerAdReady;
+    final isReady = _isInitialized && _isInterstitialAdReady;
+    print('🔍 Interstitial ad status: $isReady');
+    return isReady;
   }
 
   static Future<bool> showRewardedAd({
@@ -93,23 +106,72 @@ class AdsService {
     required Function() onAdCompleted,
     required Function(String error) onAdFailed,
   }) async {
-    if (!_isInitialized || !_isRewardedAdReady) {
-      onAdFailed('Rewarded ad not ready');
+    print('🎬 Attempting to show Rewarded ad...');
+
+    // التأكد من التهيئة أولاً
+    if (!_isInitialized) {
+      print('🔄 Unity Ads not initialized, attempting initialization...');
+      try {
+        await initialize();
+      } catch (e) {
+        final error = 'Failed to initialize Unity Ads: $e';
+        print('❌ $error');
+        onAdFailed(error);
+        return false;
+      }
+    }
+
+    if (!_isRewardedAdReady) {
+      final error = 'Rewarded ad not ready';
+      print('❌ $error');
+      onAdFailed(error);
       return false;
     }
 
     try {
-      onAdStarted();
+      print('🎯 Showing Rewarded ad: $_rewardedPlacementId');
 
-      await Future.delayed(const Duration(seconds: 5));
+      final completer = Completer<bool>();
 
-      onAdCompleted();
+      // عرض الإعلان مع المستمعين المباشرين
+      UnityAds.showVideoAd(
+        placementId: _rewardedPlacementId,
+        onStart: (placementId) {
+          print('▶️ Rewarded ad started: $placementId');
+          onAdStarted();
+        },
+        onComplete: (placementId) {
+          print('✅ Rewarded ad completed: $placementId');
+          onAdCompleted();
+          completer.complete(true);
 
-      _isRewardedAdReady = false;
-      _loadRewardedAd();
+          // إعادة تحميل الإعلان
+          _loadAds();
+        },
+        onFailed: (placementId, error, message) {
+          print('❌ Rewarded ad failed: $placementId - $error - $message');
+          onAdFailed('$error: $message');
+          completer.complete(false);
 
-      return true;
+          // إعادة تحميل الإعلان
+          _loadAds();
+        },
+      );
+
+      // انتظار اكتمال الإعلان
+      final result = await completer.future.timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          print('⏰ Rewarded ad timeout');
+          onAdFailed('Ad timeout');
+          return false;
+        },
+      );
+
+      return result;
+
     } catch (e) {
+      print('❌ Exception in showRewardedAd: $e');
       onAdFailed(e.toString());
       return false;
     }
@@ -120,41 +182,72 @@ class AdsService {
     required Function() onAdCompleted,
     required Function(String error) onAdFailed,
   }) async {
-    if (!_isInitialized || !_isInterstitialAdReady) {
-      onAdFailed('Interstitial ad not ready');
+    print('🎬 Attempting to show Interstitial ad...');
+
+    // التأكد من التهيئة أولاً
+    if (!_isInitialized) {
+      print('🔄 Unity Ads not initialized, attempting initialization...');
+      try {
+        await initialize();
+      } catch (e) {
+        final error = 'Failed to initialize Unity Ads: $e';
+        print('❌ $error');
+        onAdFailed(error);
+        return false;
+      }
+    }
+
+    if (!_isInterstitialAdReady) {
+      final error = 'Interstitial ad not ready';
+      print('❌ $error');
+      onAdFailed(error);
       return false;
     }
 
     try {
-      onAdStarted();
+      print('🎯 Showing Interstitial ad: $_interstitialPlacementId');
 
-      await Future.delayed(const Duration(seconds: 3));
+      final completer = Completer<bool>();
 
-      onAdCompleted();
+      // عرض الإعلان مع المستمعين المباشرين
+      UnityAds.showVideoAd(
+        placementId: _interstitialPlacementId,
+        onStart: (placementId) {
+          print('▶️ Interstitial ad started: $placementId');
+          onAdStarted();
+        },
+        onComplete: (placementId) {
+          print('✅ Interstitial ad completed: $placementId');
+          onAdCompleted();
+          completer.complete(true);
 
-      _isInterstitialAdReady = false;
-      _loadInterstitialAd();
+          // إعادة تحميل الإعلان
+          _loadAds();
+        },
+        onFailed: (placementId, error, message) {
+          print('❌ Interstitial ad failed: $placementId - $error - $message');
+          onAdFailed('$error: $message');
+          completer.complete(false);
 
-      return true;
+          // إعادة تحميل الإعلان
+          _loadAds();
+        },
+      );
+
+      // انتظار اكتمال الإعلان
+      final result = await completer.future.timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          print('⏰ Interstitial ad timeout');
+          onAdFailed('Ad timeout');
+          return false;
+        },
+      );
+
+      return result;
+
     } catch (e) {
-      onAdFailed(e.toString());
-      return false;
-    }
-  }
-
-  static Future<bool> showBannerAd({
-    required Function() onAdShown,
-    required Function(String error) onAdFailed,
-  }) async {
-    if (!_isInitialized || !_isBannerAdReady) {
-      onAdFailed('Banner ad not ready');
-      return false;
-    }
-
-    try {
-      onAdShown();
-      return true;
-    } catch (e) {
+      print('❌ Exception in showInterstitialAd: $e');
       onAdFailed(e.toString());
       return false;
     }
@@ -164,7 +257,8 @@ class AdsService {
     _isInitialized = false;
     _isRewardedAdReady = false;
     _isInterstitialAdReady = false;
-    _isBannerAdReady = false;
+    _initializationCompleter = null;
+    print('🧹 AdsService disposed');
   }
 }
 
@@ -177,42 +271,18 @@ class AdPlacement {
   static const String gameOver = 'game_over';
 
   static bool shouldShowInterstitialAd(String placement) {
-    switch (placement) {
-      case levelComplete:
-        return true;
-      case mainMenu:
-        return true;
-      case levelsMenu:
-        return true;
-      case gameOver:
-        return true;
-      default:
-        return false;
-    }
+    final random = DateTime.now().millisecond % 10;
+    final shouldShow = random < 7; // 70%
+
+    print('🎲 Interstitial decision for $placement: $shouldShow');
+
+    return shouldShow && AdsService.isInterstitialAdReady();
   }
 
   static bool shouldShowRewardedAd(String placement) {
-    switch (placement) {
-      case continueGame:
-        return AdsService.isRewardedAdReady();
-      case extraCoins:
-        return AdsService.isRewardedAdReady();
-      default:
-        return false;
-    }
-  }
-
-  static bool shouldShowBannerAd(String placement) {
-    switch (placement) {
-      case mainMenu:
-        return AdsService.isBannerAdReady();
-      case levelsMenu:
-        return AdsService.isBannerAdReady();
-      case gameOver:
-        return AdsService.isBannerAdReady();
-      default:
-        return false;
-    }
+    final isReady = AdsService.isRewardedAdReady();
+    print('🎲 Rewarded ad ready for $placement: $isReady');
+    return isReady;
   }
 
   static AdType getAdType(String placement) {
@@ -220,23 +290,22 @@ class AdPlacement {
       case continueGame:
         return AdType.video;
       case levelComplete:
-        return AdType.image;
+        return AdType.interstitial;
       case mainMenu:
-        return AdType.image;
+        return AdType.interstitial;
       case levelsMenu:
-        return AdType.image;
+        return AdType.interstitial;
       case gameOver:
-        return AdType.image;
+        return AdType.interstitial;
       case extraCoins:
         return AdType.video;
       default:
-        return AdType.image;
+        return AdType.interstitial;
     }
   }
 }
 
 enum AdType {
-  image,
-  video,
-  banner
+  interstitial,
+  video
 }

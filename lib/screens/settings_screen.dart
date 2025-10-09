@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/game_data_service.dart';
+import '../services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,12 +10,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool soundEnabled = true;
-  bool musicEnabled = true;
-  bool vibrationEnabled = true;
-  bool notificationsEnabled = true;
+  late SettingsService _settingsService;
 
-  // ✅ أضف متغيرات للإحصائيات
   int highScore = 0;
   int totalCoins = 0;
   int unlockedLevelsCount = 0;
@@ -24,13 +21,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _settingsService = SettingsService();
     _loadStats();
+    _settingsService.addListener(_onSettingsChanged);
   }
 
-  // ✅ دالة لتحميل الإحصائيات
+  @override
+  void dispose() {
+    _settingsService.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    setState(() {});
+  }
+
   void _loadStats() async {
     try {
-      // تحميل كل بيانات على حدة
       final highScoreResult = await GameDataService.getHighScore();
       final totalCoinsResult = await GameDataService.getTotalCoins();
       final unlockedLevelsResult = await GameDataService.getUnlockedLevels();
@@ -45,7 +52,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     } catch (e) {
       print('خطأ في تحميل الإحصائيات: $e');
-      // استخدام قيم افتراضية
       setState(() {
         highScore = 0;
         totalCoins = 0;
@@ -59,33 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF2E4057),
-                Color(0xFF048A81),
-              ],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: Colors.white),
-                SizedBox(height: 20),
-                Text(
-                  'جاري تحميل الإحصائيات...',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return _buildLoadingScreen();
     }
 
     return Scaffold(
@@ -95,8 +75,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF2E4057), // Dark blue-grey
-              Color(0xFF048A81), // Teal
+              Color(0xFF2E4057),
+              Color(0xFF048A81),
             ],
           ),
         ),
@@ -104,177 +84,176 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: [
               // Header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'الإعدادات',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 50), // Balance the back button
-                  ],
-                ),
-              ),
+              _buildHeader(),
 
-              // Settings content
+              // Content
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Game Settings Section
-                      _buildSectionCard(
-                        'إعدادات اللعبة',
-                        Icons.gamepad,
-                        [
-                          _buildSwitchTile(
-                            'الأصوات',
-                            'تشغيل أصوات اللعبة',
-                            Icons.volume_up,
-                            soundEnabled,
-                                (value) => setState(() => soundEnabled = value),
-                          ),
-                          _buildSwitchTile(
-                            'الموسيقى',
-                            'تشغيل الموسيقى الخلفية',
-                            Icons.music_note,
-                            musicEnabled,
-                                (value) => setState(() => musicEnabled = value),
-                          ),
-                          _buildSwitchTile(
-                            'الاهتزاز',
-                            'تفعيل الاهتزاز عند التصادم',
-                            Icons.vibration,
-                            vibrationEnabled,
-                                (value) => setState(() => vibrationEnabled = value),
-                          ),
-                          _buildSwitchTile(
-                            'الإشعارات',
-                            'تلقي إشعارات اللعبة',
-                            Icons.notifications,
-                            notificationsEnabled,
-                                (value) => setState(() => notificationsEnabled = value),
-                          ),
-                        ],
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900]!.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF048A81), width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 20,
+                        spreadRadius: 5,
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // Game Progress Section
-                      _buildSectionCard(
-                        'إحصائيات اللعبة',
-                        Icons.analytics,
-                        [
-                          _buildStatTile(
-                            'أعلى نقاط',
-                            highScore.toString(), // ✅ استخدام المتغير
-                            Icons.star,
-                            Colors.yellow,
-                          ),
-                          _buildStatTile(
-                            'إجمالي العملات',
-                            totalCoins.toString(), // ✅ استخدام المتغير
-                            Icons.monetization_on,
-                            Colors.amber,
-                          ),
-                          _buildStatTile(
-                            'المراحل المكتملة',
-                            '${unlockedLevelsCount - 1}/100', // ✅ استخدام المتغير
-                            Icons.check_circle,
-                            Colors.green,
-                          ),
-                          _buildStatTile(
-                            'المرحلة الحالية',
-                            currentLevel.toString(), // ✅ استخدام المتغير
-                            Icons.play_circle,
-                            Colors.blue,
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // App Actions Section
-                      _buildSectionCard(
-                        'إجراءات التطبيق',
-                        Icons.settings,
-                        [
-                          _buildActionTile(
-                            'قيم اللعبة',
-                            'ساعدنا بتقييمك في المتجر',
-                            Icons.star_rate,
-                            Colors.orange,
-                                () => _rateApp(),
-                          ),
-                          _buildActionTile(
-                            'مشاركة اللعبة',
-                            'شارك اللعبة مع أصدقائك',
-                            Icons.share,
-                            Colors.blue,
-                                () => _shareApp(),
-                          ),
-                          _buildActionTile(
-                            'إعادة تعيين البيانات',
-                            'حذف جميع البيانات والبدء من جديد',
-                            Icons.refresh,
-                            Colors.red,
-                                () => _resetGameData(),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // About Section
-                      _buildSectionCard(
-                        'حول اللعبة',
-                        Icons.info,
-                        [
-                          _buildInfoTile(
-                            'الإصدار',
-                            '1.0.0',
-                            Icons.info_outline,
-                          ),
-                          _buildInfoTile(
-                            'المطور',
-                            'فريق عالماشي',
-                            Icons.code,
-                          ),
-                          _buildActionTile(
-                            'سياسة الخصوصية',
-                            'اطلع على سياسة الخصوصية',
-                            Icons.privacy_tip,
-                            Colors.grey,
-                                () => _openPrivacyPolicy(),
-                          ),
-                          _buildActionTile(
-                            'شروط الاستخدام',
-                            'اطلع على شروط الاستخدام',
-                            Icons.description,
-                            Colors.grey,
-                                () => _openTermsOfService(),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 40),
                     ],
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+
+                        // Game Settings Section
+                        _buildSection(
+                          'إعدادات اللعبة',
+                          Icons.gamepad,
+                          Colors.blue,
+                          [
+                            _buildSettingOption(
+                              icon: Icons.volume_up,
+                              text: 'الأصوات',
+                              description: 'تشغيل أصوات اللعبة',
+                              value: _settingsService.soundEnabled,
+                              onChanged: (value) => _settingsService.setSoundEnabled(value),
+                              color: Colors.green,
+                            ),
+                            _buildSettingOption(
+                              icon: Icons.music_note,
+                              text: 'الموسيقى',
+                              description: 'تشغيل الموسيقى الخلفية',
+                              value: _settingsService.musicEnabled,
+                              onChanged: (value) => _settingsService.setMusicEnabled(value),
+                              color: Colors.purple,
+                            ),
+                            _buildSettingOption(
+                              icon: Icons.vibration,
+                              text: 'الاهتزاز',
+                              description: 'تفعيل الاهتزاز عند التصادم',
+                              value: _settingsService.vibrationEnabled,
+                              onChanged: (value) => _settingsService.setVibrationEnabled(value),
+                              color: Colors.orange,
+                            ),
+                            _buildSettingOption(
+                              icon: Icons.notifications,
+                              text: 'الإشعارات',
+                              description: 'تلقي إشعارات اللعبة',
+                              value: _settingsService.notificationsEnabled,
+                              onChanged: (value) => _settingsService.setNotificationsEnabled(value),
+                              color: Colors.red,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Game Progress Section
+                        _buildSection(
+                          'إحصائيات اللعبة',
+                          Icons.analytics,
+                          Colors.amber,
+                          [
+                            _buildStatOption(
+                              icon: Icons.star,
+                              text: 'أعلى نقاط',
+                              value: highScore.toString(),
+                              color: Colors.yellow,
+                            ),
+                            _buildStatOption(
+                              icon: Icons.monetization_on,
+                              text: 'إجمالي العملات',
+                              value: totalCoins.toString(),
+                              color: Colors.amber,
+                            ),
+                            _buildStatOption(
+                              icon: Icons.check_circle,
+                              text: 'المراحل المكتملة',
+                              value: '${unlockedLevelsCount - 1}/100',
+                              color: Colors.green,
+                            ),
+                            _buildStatOption(
+                              icon: Icons.play_circle,
+                              text: 'المرحلة الحالية',
+                              value: currentLevel.toString(),
+                              color: Colors.blue,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // App Actions Section
+                        _buildSection(
+                          'إجراءات التطبيق',
+                          Icons.settings,
+                          Colors.orange,
+                          [
+                            _buildActionOption(
+                              icon: Icons.star_rate,
+                              text: 'قيم اللعبة',
+                              description: 'ساعدنا بتقييمك في المتجر',
+                              onTap: _rateApp,
+                              color: Colors.orange,
+                            ),
+                            _buildActionOption(
+                              icon: Icons.share,
+                              text: 'مشاركة اللعبة',
+                              description: 'شارك اللعبة مع أصدقائك',
+                              onTap: _shareApp,
+                              color: Colors.blue,
+                            ),
+                            _buildActionOption(
+                              icon: Icons.refresh,
+                              text: 'إعادة تعيين البيانات',
+                              description: 'حذف جميع البيانات والبدء من جديد',
+                              onTap: _resetGameData,
+                              color: Colors.red,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // About Section
+                        _buildSection(
+                          'حول اللعبة',
+                          Icons.info,
+                          Colors.grey,
+                          [
+                            _buildInfoOption(
+                              icon: Icons.info_outline,
+                              text: 'الإصدار',
+                              value: '1.0.0',
+                            ),
+                            _buildInfoOption(
+                              icon: Icons.code,
+                              text: 'المطور',
+                              value: 'فريق عالماشي',
+                            ),
+                            _buildActionOption(
+                              icon: Icons.privacy_tip,
+                              text: 'سياسة الخصوصية',
+                              description: 'اطلع على سياسة الخصوصية',
+                              onTap: _openPrivacyPolicy,
+                              color: Colors.grey,
+                            ),
+                            _buildActionOption(
+                              icon: Icons.description,
+                              text: 'شروط الاستخدام',
+                              description: 'اطلع على شروط الاستخدام',
+                              onTap: _openTermsOfService,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -285,18 +264,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ... باقي الدوال (_buildSectionCard, _buildSwitchTile, etc.) تبقى كما هي ...
-  // تأكد من وجود جميع الدوال المساعدة الأخرى
-
-  Widget _buildSectionCard(String title, IconData icon, List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E4057),
+              Color(0xFF048A81),
+            ],
+          ),
         ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.white),
+              SizedBox(height: 20),
+              Text(
+                'جاري تحميل الإحصائيات...',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.amber,
+                size: 30,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'الإعدادات',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Color(0xFFFFAE00),
+                      blurRadius: 10,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 50),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          height: 2,
+          color: Colors.white.withOpacity(0.3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSection(String title, IconData icon, Color color, List<Widget> children) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withOpacity(0.5), width: 2),
       ),
       child: Column(
         children: [
@@ -304,7 +351,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: color.withOpacity(0.2),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(15),
                 topRight: Radius.circular(15),
@@ -312,14 +359,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white, size: 24),
+                Icon(icon, color: color, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: color,
                   ),
                 ),
               ],
@@ -332,13 +379,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSwitchTile(
-      String title,
-      String subtitle,
-      IconData icon,
-      bool value,
-      Function(bool) onChanged,
-      ) {
+  Widget _buildSettingOption({
+    required IconData icon,
+    required String text,
+    required String description,
+    required bool value,
+    required Function(bool) onChanged,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -351,14 +399,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white70, size: 20),
+          Icon(icon, color: color, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  text,
                   style: const TextStyle(
                     fontSize: 16,
                     color: Colors.white,
@@ -366,10 +414,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 Text(
-                  subtitle,
+                  description,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.white60,
+                    color: Colors.white70,
                   ),
                 ),
               ],
@@ -378,7 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.green,
+            activeColor: color,
             inactiveThumbColor: Colors.grey,
           ),
         ],
@@ -386,7 +434,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildStatTile(String title, String value, IconData icon, Color color) {
+  Widget _buildStatOption({
+    required IconData icon,
+    required String text,
+    required String value,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -399,11 +452,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 20),
+          Icon(icon, color: color, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              title,
+              text,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
@@ -424,63 +477,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildActionTile(
-      String title,
-      String subtitle,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white60,
-                    ),
-                  ),
-                ],
+  Widget _buildActionOption({
+    required IconData icon,
+    required String text,
+    required String description,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white60,
-              size: 16,
-            ),
-          ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      text,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: color,
+                size: 16,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoTile(String title, String value, IconData icon) {
+  Widget _buildInfoOption({
+    required IconData icon,
+    required String text,
+    required String value,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -493,11 +554,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white70, size: 20),
+          Icon(icon, color: Colors.white70, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              title,
+              text,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
@@ -517,21 +578,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ... دوال الإجراءات (_rateApp, _shareApp, etc.) تبقى كما هي ...
-
+  // دوال الإجراءات تبقى كما هي
   void _rateApp() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('تقييم اللعبة'),
-          content: const Column(
+        return _buildStyledDialog(
+          title: 'تقييم اللعبة',
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.star, size: 60, color: Colors.amber),
-              SizedBox(height: 10),
-              Text('هل تستمتع بلعبة عالماشي؟'),
-              Text('ساعدنا بتقييمك في المتجر!'),
+              const Icon(Icons.star, size: 60, color: Colors.amber),
+              const SizedBox(height: 10),
+              const Text('هل تستمتع بلعبة عالماشي؟'),
+              const Text('ساعدنا بتقييمك في المتجر!'),
             ],
           ),
           actions: [
@@ -553,12 +613,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _shareApp() {
-    // In a real app, you would use the share package
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('مشاركة اللعبة'),
+        return _buildStyledDialog(
+          title: 'مشاركة اللعبة',
           content: const Text('جرب لعبة عالماشي الممتعة!\n\nحمل اللعبة من المتجر واستمتع بالتحدي.'),
           actions: [
             TextButton(
@@ -568,7 +627,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Here you would implement actual sharing
               },
               child: const Text('مشاركة'),
             ),
@@ -582,8 +640,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('إعادة تعيين البيانات'),
+        return _buildStyledDialog(
+          title: 'إعادة تعيين البيانات',
           content: const Text('هل أنت متأكد من حذف جميع بيانات اللعبة؟\n\nسيتم فقدان جميع النقاط والعملات والمراحل المفتوحة.'),
           actions: [
             TextButton(
@@ -595,7 +653,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await GameDataService.resetGameData();
                 Navigator.of(context).pop();
                 setState(() {
-                  _loadStats(); // إعادة تحميل الإحصائيات
+                  _loadStats();
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -617,8 +675,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('تقييم اللعبة'),
+        return _buildStyledDialog(
+          title: 'تقييم اللعبة',
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -644,8 +702,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('سياسة الخصوصية'),
+        return _buildStyledDialog(
+          title: 'سياسة الخصوصية',
           content: const SingleChildScrollView(
             child: Text(
               'نحن في عالماشي نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية.\n\n'
@@ -671,8 +729,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('شروط الاستخدام'),
+        return _buildStyledDialog(
+          title: 'شروط الاستخدام',
           content: const SingleChildScrollView(
             child: Text(
               'شروط استخدام لعبة عالماشي:\n\n'
@@ -692,6 +750,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildStyledDialog({
+    required String title,
+    required Widget content,
+    required List<Widget> actions,
+  }) {
+    return Dialog(
+      backgroundColor: Colors.grey[900]!.withOpacity(0.95),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFF048A81), width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            content,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: actions,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

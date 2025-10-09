@@ -226,7 +226,9 @@ class LevelCompleteScreen extends StatelessWidget {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => GameScreen(levelData: levelData),
+        // builder: (context) => GameScreen(levelData: levelData),
+        builder: (context) => GameScreen(), // بدون levelData مؤقتاً
+
       ),
     );
   }

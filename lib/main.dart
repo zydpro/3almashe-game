@@ -1,3 +1,5 @@
+import 'package:almashe_game/screens/splash_screens.dart';
+import 'package:almashe_game/services/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'screens/main_menu_screen.dart'; // تأكد من وجود هذا المسار
 import 'services/ads_service.dart';
@@ -6,6 +8,11 @@ import 'services/image_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SettingsService().initialize(); // ✅ أضف هذا السطر
+  // تحسين الأداء - إخفاء debugPrint في الإصدار النهائي
+  debugPrint = (String? message, {int? wrapWidth}) {
+    // يمكن تركها فارغة أو تسجيل في ملف بدلاً من الكونسول
+  };
 
   // Initialize services
   await AdsService.initialize();
@@ -48,7 +55,7 @@ class AlmasheGame extends StatelessWidget {
           bodySmall: TextStyle(fontFamily: 'Cairo'),
         ),
       ),
-      home: const MainMenuScreen(),
+      home: const SplashScreens(),
     );
   }
 }

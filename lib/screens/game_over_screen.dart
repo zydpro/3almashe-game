@@ -21,7 +21,7 @@ class GameOverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool levelCompleted = levelData != null && score >= levelData!.targetScore;
-    bool nextLevelUnlocked = levelCompleted && levelData!.levelNumber < 20;
+    bool nextLevelUnlocked = levelCompleted && levelData!.levelNumber < 100;
     int coinsEarned = score ~/ 10;
 
     _saveGameProgress();
@@ -34,13 +34,13 @@ class GameOverScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: levelCompleted
                 ? [
-                    const Color(0xFF4CAF50),
-                    const Color(0xFF2E7D32),
-                  ]
+              const Color(0xFF4CAF50),
+              const Color(0xFF2E7D32),
+            ]
                 : [
-                    const Color(0xFF2E4057),
-                    const Color(0xFF8B0000),
-                  ],
+              const Color(0xFF2E4057),
+              const Color(0xFF8B0000),
+            ],
           ),
         ),
         child: SafeArea(
@@ -125,12 +125,12 @@ class GameOverScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // زر الاستمرار بمشاهدة إعلان
-                      if (!levelCompleted && AdsService.isRewardedAdReady()) ...[
+                      if (!levelCompleted) ...[
                         _buildActionButton(
                           'استمر (شاهد إعلان)',
                           Icons.play_arrow,
                           Colors.green,
-                          () => _showAdAndContinue(context),
+                              () => _showAdAndContinue(context),
                         ),
                         const SizedBox(height: 15),
                       ],
@@ -141,7 +141,7 @@ class GameOverScreen extends StatelessWidget {
                           'المرحلة التالية',
                           Icons.arrow_forward,
                           Colors.blue,
-                          () => _goToNextLevel(context),
+                              () => _showAdAndGoToNextLevel(context),
                         ),
                         const SizedBox(height: 15),
                       ],
@@ -151,7 +151,7 @@ class GameOverScreen extends StatelessWidget {
                         'إعادة اللعب',
                         Icons.refresh,
                         Colors.orange,
-                        () => _restartLevel(context),
+                            () => _showAdAndRestartLevel(context),
                       ),
                       const SizedBox(height: 15),
 
@@ -160,7 +160,7 @@ class GameOverScreen extends StatelessWidget {
                         'قائمة المراحل',
                         Icons.list,
                         Colors.purple,
-                        () => _goToLevels(context),
+                            () => _showAdAndGoToLevels(context),
                       ),
                       const SizedBox(height: 15),
 
@@ -169,7 +169,7 @@ class GameOverScreen extends StatelessWidget {
                         'القائمة الرئيسية',
                         Icons.home,
                         Colors.grey,
-                        () => _goToMainMenu(context),
+                            () => _showAdAndGoToMainMenu(context),
                       ),
                     ],
                   ),
@@ -185,6 +185,7 @@ class GameOverScreen extends StatelessWidget {
   void _saveGameProgress() {
     if (levelData != null) {
       GameDataService.saveGameProgress(score, levelData!.levelNumber);
+      print('💾 تم حفظ التقدم: النقاط $score - المستوى ${levelData!.levelNumber}');
     }
   }
 
@@ -227,48 +228,19 @@ class GameOverScreen extends StatelessWidget {
   }
 
   void _showAdAndContinue(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 20),
-              Text('جاري تحميل الإعلان...'),
-            ],
-          ),
-        );
-      },
-    );
+    print('🎬 المستخدم ضغط على "استمر (شاهد إعلان)"');
+
+    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
 
     AdsService.showRewardedAd(
       onAdStarted: () {
-        Navigator.of(context).pop();
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return const AlertDialog(
-              title: Text('إعلان مكافأة'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.video_library, size: 60, color: Colors.blue),
-                  SizedBox(height: 10),
-                  Text('يتم عرض الإعلان...'),
-                  SizedBox(height: 10),
-                  LinearProgressIndicator(),
-                ],
-              ),
-            );
-          },
-        );
+        print('▶️ إعلان الاستمرار بدأ');
+        Navigator.pop(context); // إغلاق dialog التحميل
+        _showAdPlayingDialog(context, 'إعلان مكافأة', 'ستستمر اللعبة بعد انتهاء الإعلان');
       },
       onAdCompleted: () {
-        Navigator.of(context).pop();
+        print('✅ إعلان الاستمرار اكتمل - الانتقال للعبة');
+        Navigator.pop(context); // إغلاق dialog العرض
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -277,95 +249,206 @@ class GameOverScreen extends StatelessWidget {
         );
       },
       onAdFailed: (error) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل في تحميل الإعلان: $error'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        print('❌ إعلان الاستمرار فشل: $error');
+        Navigator.pop(context); // إغلاق dialog
+        _showAdErrorSnackBar(context, error);
       },
     );
   }
 
-  void _goToNextLevel(BuildContext context) async {
-    if (levelData != null && levelData!.levelNumber < 100) {
-      LevelData nextLevel = await LevelData.getLevelData(levelData!.levelNumber + 1);
+  void _showAdAndGoToNextLevel(BuildContext context) async {
+    print('🚀 المستخدم ضغط على "المرحلة التالية"');
 
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('مرحلة جديدة!'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star, size: 60, color: Colors.amber),
-                const SizedBox(height: 10),
-                Text(
-                  nextLevel.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  nextLevel.description,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('لاحقاً'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _startNextLevel(context, nextLevel);
-                },
-                child: const Text('ابدأ'),
-              ),
-            ],
-          );
-        },
-      );
+    if (levelData != null && levelData!.levelNumber < 100) {
+      try {
+        LevelData nextLevel = await LevelData.getLevelData(levelData!.levelNumber + 1);
+        _showAdAndStartNextLevel(context, nextLevel);
+      } catch (e) {
+        print('❌ خطأ في تحميل المرحلة التالية: $e');
+        _showErrorDialog(context, 'تعذر تحميل المرحلة التالية');
+      }
+    } else {
+      _showCompletionDialog(context);
     }
   }
 
-  void _startNextLevel(BuildContext context, LevelData nextLevel) {
+  void _showAdAndStartNextLevel(BuildContext context, LevelData nextLevel) {
+    print('🎯 بدء المرحلة التالية مع إعلان: ${nextLevel.name}');
+
+    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+
+    AdsService.showInterstitialAd(
+      onAdStarted: () {
+        print('▶️ إعلان المرحلة التالية بدأ');
+        Navigator.pop(context);
+      },
+      onAdCompleted: () {
+        print('✅ إعلان المرحلة التالية اكتمل');
+        _navigateToLevel(context, nextLevel);
+      },
+      onAdFailed: (error) {
+        print('❌ إعلان المرحلة التالية فشل: $error');
+        Navigator.pop(context);
+        _navigateToLevel(context, nextLevel);
+      },
+    );
+  }
+
+  void _showAdAndRestartLevel(BuildContext context) {
+    print('🔄 المستخدم ضغط على "إعادة اللعب" مع إعلان');
+
+    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+
+    AdsService.showInterstitialAd(
+      onAdStarted: () {
+        print('▶️ إعلان إعادة اللعب بدأ');
+        Navigator.pop(context);
+      },
+      onAdCompleted: () {
+        print('✅ إعلان إعادة اللعب اكتمل');
+        _restartLevel(context);
+      },
+      onAdFailed: (error) {
+        print('❌ إعلان إعادة اللعب فشل: $error');
+        Navigator.pop(context);
+        _restartLevel(context);
+      },
+    );
+  }
+
+  void _showAdAndGoToLevels(BuildContext context) {
+    print('📋 المستخدم ضغط على "قائمة المراحل" مع إعلان');
+
+    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+
+    AdsService.showInterstitialAd(
+      onAdStarted: () {
+        print('▶️ إعلان قائمة المراحل بدأ');
+        Navigator.pop(context);
+      },
+      onAdCompleted: () {
+        print('✅ إعلان قائمة المراحل اكتمل');
+        _goToLevels(context);
+      },
+      onAdFailed: (error) {
+        print('❌ إعلان قائمة المراحل فشل: $error');
+        Navigator.pop(context);
+        _goToLevels(context);
+      },
+    );
+  }
+
+  void _showAdAndGoToMainMenu(BuildContext context) {
+    print('🏠 المستخدم ضغط على "القائمة الرئيسية" مع إعلان');
+
+    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+
+    AdsService.showInterstitialAd(
+      onAdStarted: () {
+        print('▶️ إعلان القائمة الرئيسية بدأ');
+        Navigator.pop(context);
+      },
+      onAdCompleted: () {
+        print('✅ إعلان القائمة الرئيسية اكتمل');
+        _goToMainMenu(context);
+      },
+      onAdFailed: (error) {
+        print('❌ إعلان القائمة الرئيسية فشل: $error');
+        Navigator.pop(context);
+        _goToMainMenu(context);
+      },
+    );
+  }
+
+  // الدوال المساعدة
+  void _showLoadingDialog(BuildContext context, String message) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const AlertDialog(
+        return AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 20),
-              Text('جاري تحميل الإعلان...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              Text(message),
             ],
           ),
         );
       },
     );
+  }
 
-    AdsService.showInterstitialAd(
-      onAdStarted: () {
-        Navigator.of(context).pop();
-      },
-      onAdCompleted: () {
-        _navigateToLevel(context, nextLevel);
-      },
-      onAdFailed: (error) {
-        Navigator.of(context).pop();
-        _navigateToLevel(context, nextLevel);
+  void _showAdPlayingDialog(BuildContext context, String title, String description) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.video_library, size: 60, color: Colors.blue),
+              const SizedBox(height: 10),
+              const Text('يتم عرض الإعلان...'),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                backgroundColor: Colors.grey[300],
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
+  void _showAdErrorSnackBar(BuildContext context, String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('فشل في تحميل الإعلان: $error'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'حاول مرة أخرى',
+          textColor: Colors.white,
+          onPressed: () {
+            // يمكن إضافة إعادة المحاولة إذا لزم الأمر
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLevelStat(String title, String value) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
   void _navigateToLevel(BuildContext context, LevelData nextLevel) {
+    print('🔄 الانتقال إلى المرحلة: ${nextLevel.name}');
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -375,6 +458,8 @@ class GameOverScreen extends StatelessWidget {
   }
 
   void _restartLevel(BuildContext context) {
+    print('🎮 إعادة تشغيل المرحلة: ${levelData!.name}');
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -400,6 +485,71 @@ class GameOverScreen extends StatelessWidget {
         builder: (context) => const MainMenuScreen(),
       ),
           (route) => false,
+    );
+  }
+
+  void _showCompletionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('🎉 مبروك!'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.celebration, size: 60, color: Colors.amber),
+              SizedBox(height: 15),
+              Text(
+                'لقد أكملت جميع المراحل!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'أنت بطل اللعبة! 🏆',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('رائع!'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              SizedBox(width: 10),
+              Text('خطأ'),
+            ],
+          ),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('حسناً'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

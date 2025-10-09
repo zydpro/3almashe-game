@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../models/enums.dart';
 import '../models/obstacle.dart';
 
 class ObstacleSpawner {

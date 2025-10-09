@@ -16,6 +16,10 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.main.iml" filepath="$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/137445943/android.device_info_plus.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.iml" filepath="$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.main.iml" filepath="$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1518075653/android.package_info_plus.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.iml" filepath="$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/1693007438/android.path_provider_android.main.iml" />
@@ -24,13 +28,25 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-329725190/android.shared_preferences_android.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1150274559/android.vibration.iml" filepath="$PROJECT_DIR$/.idea/modules/1150274559/android.vibration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.iml" filepath="$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.main.iml" filepath="$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1269971641/android.wakelock_plus.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1583712905/gradle.iml" filepath="$PROJECT_DIR$/.idea/modules/-1583712905/gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1583712905/gradle.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-1583712905/gradle.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1583712905/gradle.test.iml" filepath="$PROJECT_DIR$/.idea/modules/-1583712905/gradle.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.main.iml" filepath="$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1150274559/vibration-2.1.0.android.vibration.unitTest.iml" />
     </modules>
   </component>
 </project>

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class ImageService {
-  // مسارات الصور الجديدة
   static const String characterRun = 'assets/images/characters/character_run.png';
   static const String characterJump = 'assets/images/characters/character_jump.png';
   static const String characterDuck = 'assets/images/characters/character_duck.png';
@@ -13,10 +12,14 @@ class ImageService {
   static const String coin = 'assets/images/resources/coin.png';
   static const String package = 'assets/images/resources/package.png';
 
+  // ✅ إضافة صورة المنصة
+  static const String platform = 'assets/images/platforms/platform.png';
+
   // الأعداء
   static const String enemyGoomba = 'assets/images/enemies/goomba.png';
   static const String enemyMushroom = 'assets/images/enemies/mushroom.png';
   static const String enemyKoopa = 'assets/images/enemies/koopa.png';
+  static const String enemyFlying = 'assets/images/enemies/flying_enemy.png';
 
   // الزعماء
   static const String boss1 = 'assets/images/bosses/boss1.png';
@@ -42,7 +45,6 @@ class ImageService {
   static const String playButton = 'assets/images/ui/play_button.png';
   static const String bossHealthBar = 'assets/images/ui/boss_health_bar.png';
 
-  // precache جميع الصور
   static Future<void> preloadImages(BuildContext context) async {
     try {
       // الشخصيات
@@ -51,14 +53,16 @@ class ImageService {
       await precacheImage(const AssetImage(characterDuck), context);
       await precacheImage(const AssetImage(characterAttack), context);
 
-      // العوائق
+      // العوائق والمنصات
       await precacheImage(const AssetImage(pipe), context);
       await precacheImage(const AssetImage(brick), context);
+      await precacheImage(const AssetImage(platform), context); // ✅ المنصة
 
       // الأعداء
       await precacheImage(const AssetImage(enemyGoomba), context);
       await precacheImage(const AssetImage(enemyMushroom), context);
       await precacheImage(const AssetImage(enemyKoopa), context);
+      await precacheImage(const AssetImage(enemyFlying), context);
 
       // الزعماء
       await precacheImage(const AssetImage(boss1), context);
@@ -93,25 +97,19 @@ class ImageService {
     }
   }
 
-  // الحصول على صورة العدو بناءً على النوع
   static String getEnemyImage(String enemyType) {
     switch (enemyType) {
-      case 'goomba':
-        return enemyGoomba;
-      case 'mushroom':
-        return enemyMushroom;
-      case 'koopa':
-        return enemyKoopa;
-      default:
-        return enemyGoomba;
+      case 'goomba': return enemyGoomba;
+      case 'mushroom': return enemyMushroom;
+      case 'koopa': return enemyKoopa;
+      case 'koopa': return enemyFlying;
+      default: return enemyGoomba;
     }
   }
 
-  // الحصول على صورة الزعيم بناءً على المستوى
   static String getBossImage(int level, bool isRare, bool isFinal) {
-    if (isFinal) {
-      return finalBoss;
-    } else if (isRare) {
+    if (isFinal) return finalBoss;
+    if (isRare) {
       final rareIndex = _getRareBossIndex(level);
       switch (rareIndex) {
         case 0: return rareBoss1;
@@ -139,17 +137,12 @@ class ImageService {
     return rareLevels.indexOf(level) % 5;
   }
 
-  // الحصول على صورة الباور أب بناءً على النوع
   static String getPowerUpImage(String powerUpType) {
     switch (powerUpType) {
-      case 'points':
-        return powerUpPoints;
-      case 'shield':
-        return powerUpShield;
-      case 'health':
-        return powerUpHealth;
-      default:
-        return powerUpPoints;
+      case 'points': return powerUpPoints;
+      case 'shield': return powerUpShield;
+      case 'health': return powerUpHealth;
+      default: return powerUpPoints;
     }
   }
 }
