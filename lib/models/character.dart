@@ -20,7 +20,7 @@ class Character {
   String imagePath;
   int jumpCount;
 
-  // إعدادات الفيزياء
+  // ✅ إعدادات الفيزياء المحسنة
   double jumpPower = -0.045;
   double gravity = 0.0018;
   double weight = 1.1;
@@ -31,9 +31,14 @@ class Character {
   bool _isOnPlatform = false;
   double? _platformY;
   double _velocityY = 0.0;
+
+  // ✅ نظام الحركة المحسن
   bool _isMovingLeft = false;
   bool _isMovingRight = false;
-  double _moveSpeed = 0.008;
+  bool _isMovingUp = false;
+  bool _isMovingDown = false;
+  double _moveSpeed = 0.025;
+  double _verticalMoveSpeed = 0.02;
 
   // خصائص إضافية
   bool hasShield;
@@ -48,7 +53,25 @@ class Character {
   double attackCooldown;
   int lives;
 
-  // الخصائص العامة للمنصات
+  // ✅ نظام القفز المحسن
+  double _minJumpY = 0.3;
+  double _maxJumpY = 0.1;
+  double _currentMaxJumpHeight = 0.0;
+  double _jumpForce = 0.0;
+  bool _isLongJump = false;
+  double _longJumpMultiplier = 1.5;
+
+  // ✅ نظام القفز للأسفل
+  bool _isDownJumping = false;
+  double _downJumpForce = 0.0;
+  double _downJumpMultiplier = 1.2;
+
+  // ✅ نظام الحركة السلسة
+  double _targetX = 0.0;
+  double _targetY = 0.0;
+  double _moveSmoothing = 0.1;
+
+  // الخصائص العامة
   bool get isOnPlatform => _isOnPlatform;
   set isOnPlatform(bool value) => _isOnPlatform = value;
 
@@ -58,17 +81,14 @@ class Character {
   double get velocityY => _velocityY;
   set velocityY(double value) => _velocityY = value;
 
-  // ✅ إضافة حدود القفز
-  double _minJumpY = 0.3;  // الحد الأدنى للارتفاع (لا يقل عن 30% من الشاشة)
-  double _maxJumpY = 0.1;  // الحد الأقصى للارتفاع (لا يزيد عن 10% من الشاشة)
-
-  // ✅ إضافة متغير لتتبع الحد الأقصى للقفزة
-  double _currentMaxJumpHeight = 0.0;
-
   double get currentMaxJumpHeight => _currentMaxJumpHeight;
   bool get isMovingLeft => _isMovingLeft;
   bool get isMovingRight => _isMovingRight;
+  bool get isMovingUp => _isMovingUp;
+  bool get isMovingDown => _isMovingDown;
   double get moveSpeed => _moveSpeed;
+  bool get isLongJump => _isLongJump;
+  bool get isDownJumping => _isDownJumping;
 
   Character({
     required this.x,
@@ -76,16 +96,16 @@ class Character {
     this.width = 0.1,
     this.height = 0.15,
     this.verticalSpeed = 0.0,
-    this.gravity = 0.002,
+    this.gravity = 0.0018,
     this.isJumping = false,
     this.isDucking = false,
     this.isAttacking = false,
     this.groundY = 0.75,
     this.jumpHeight = 0.25,
-    this.jumpPower = -0.038,
+    this.jumpPower = -0.045,
     this.imagePath = 'assets/images/characters/character_run.png',
     this.jumpCount = 0,
-    this.weight = 1.5,
+    this.weight = 1.1,
     this.groundFriction = 0.98,
     this.hasShield = false,
     this.isInvincible = false,
@@ -97,33 +117,74 @@ class Character {
   })  : normalHeight = height,
         duckHeight = height * 0.6,
         packages = [],
-        lastAttackTime = 0;
+        lastAttackTime = 0 {
+    _targetX = x;
+    _targetY = y;
+  }
 
-  void jump() {
+  // ✅ نظام القفز المحسن مع مراحل متعددة
+  void jump({bool isLongJump = false, bool isDownJump = false}) {
     if (!isJumping && !isDucking) {
       isJumping = true;
       _isOnPlatform = false;
       _platformY = null;
-      _velocityY = jumpPower * weight;
+
+      if (isDownJump) {
+        // ✅ قفز للأسفل
+        _isDownJumping = true;
+        _downJumpForce = jumpPower * weight * _downJumpMultiplier;
+        _velocityY = _downJumpForce.abs();
+      } else {
+        // ✅ قفز عادي أو طويل للأعلى
+        _isLongJump = isLongJump;
+        double jumpMultiplier = isLongJump ? _longJumpMultiplier : 1.0;
+        _jumpForce = jumpPower * weight * jumpMultiplier;
+        _velocityY = _jumpForce;
+      }
+
       jumpCount++;
-
-      // ✅ حساب الحد الأقصى للقفزة بشكل أكثر دقة
       _currentMaxJumpHeight = (y - jumpHeight).clamp(0.15, 0.4);
-
-      print('🦘 بدأ القفز - '
-          'القوة: $jumpPower, '
-          'الوزن: $weight, '
-          'الحد الأقصى: ${_currentMaxJumpHeight.toStringAsFixed(3)}');
     }
   }
 
-  // ✅ دالة مساعدة لضبط حدود القفز
+  // ✅ دالة لبدء القفز مع تحديد القوة بناءً على مسافة السحب
+  void startJump(double dragDistance) {
+    if (!isJumping && !isDucking) {
+      isJumping = true;
+      _isOnPlatform = false;
+      _platformY = null;
+
+      // ✅ تحديد نوع القفز بناءً على مسافة السحب
+      if (dragDistance < -30) {
+        // ✅ سحب صغير للأعلى - قفزة صغيرة
+        _isLongJump = false;
+        _jumpForce = jumpPower * weight;
+        _velocityY = _jumpForce;
+      } else if (dragDistance < -100) {
+        // ✅ سحب كبير للأعلى - قفزة عالية
+        _isLongJump = true;
+        _jumpForce = jumpPower * weight * _longJumpMultiplier;
+        _velocityY = _jumpForce;
+      } else if (dragDistance > 30) {
+        // ✅ سحب صغير للأسفل - قفزة صغيرة للأسفل
+        _isDownJumping = true;
+        _downJumpForce = jumpPower * weight * 0.8;
+        _velocityY = _downJumpForce.abs();
+      } else if (dragDistance > 60) {
+        // ✅ سحب كبير للأسفل - قفزة طويلة للأسفل
+        _isDownJumping = true;
+        _downJumpForce = jumpPower * weight * _downJumpMultiplier;
+        _velocityY = _downJumpForce.abs();
+      }
+
+      jumpCount++;
+      _currentMaxJumpHeight = (y - jumpHeight).clamp(0.15, 0.4);
+    }
+  }
+
   void setJumpBounds(double minY, double maxY) {
     _minJumpY = minY.clamp(0.1, 0.5);
     _maxJumpY = maxY.clamp(0.05, 0.2);
-    print('🎯 حدود القفز - '
-        'الحد الأدنى: ${_minJumpY.toStringAsFixed(3)}, '
-        'الحد الأقصى: ${_maxJumpY.toStringAsFixed(3)}');
   }
 
   void duck() {
@@ -131,7 +192,6 @@ class Character {
       isDucking = true;
       height = duckHeight;
       y = (_isOnPlatform && _platformY != null) ? _platformY! - height : groundY - height;
-      print('🦆 Character ducking');
     }
   }
 
@@ -142,24 +202,70 @@ class Character {
       if (!isJumping) {
         y = (_isOnPlatform && _platformY != null) ? _platformY! - height : groundY - height;
       }
-      print('🚶 Character standing');
     }
   }
 
-  // دوال الحركة الأفقية
+  // ✅ دوال الحركة المحسنة مع سلاسة
   void moveLeft() {
     _isMovingLeft = true;
     _isMovingRight = false;
+    _targetX = (x - _moveSpeed).clamp(0.05, 0.95);
   }
 
   void moveRight() {
     _isMovingRight = true;
     _isMovingLeft = false;
+    _targetX = (x + _moveSpeed).clamp(0.05, 0.95);
+  }
+
+  void moveUp() {
+    _isMovingUp = true;
+    _isMovingDown = false;
+    _targetY = (y - _verticalMoveSpeed).clamp(0.1, 0.85);
+  }
+
+  void moveDown() {
+    _isMovingDown = true;
+    _isMovingUp = false;
+    _targetY = (y + _verticalMoveSpeed).clamp(0.1, 0.85);
+  }
+
+  void stopHorizontalMoving() {
+    _isMovingLeft = false;
+    _isMovingRight = false;
+  }
+
+  void stopVerticalMoving() {
+    _isMovingUp = false;
+    _isMovingDown = false;
   }
 
   void stopMoving() {
-    _isMovingLeft = false;
-    _isMovingRight = false;
+    stopHorizontalMoving();
+    stopVerticalMoving();
+  }
+
+  // ✅ دالة للتحكم في الحركة من خلال السحب - محسنة وسلسة
+  void handleDrag(double deltaX, double deltaY) {
+    // ✅ حساسية السحب المحسنة
+    double dragSensitivity = 0.0005;
+
+    // ✅ تحديث المواقع المستهدفة للحركة السلسة
+    _targetX = (x + deltaX * dragSensitivity).clamp(0.05, 0.95);
+
+    // ✅ الحركة العمودية (فقط إذا لم يكن على الأرض)
+    if (!isJumping && !_isOnPlatform) {
+      _targetY = (y + deltaY * dragSensitivity).clamp(0.1, 0.85);
+    }
+
+    // ✅ تحديد نوع القفز بناءً على قوة السحب العمودي
+    if (deltaY < -20) {
+      bool isLongJump = deltaY.abs() > 80;
+      jump(isLongJump: isLongJump);
+    } else if (deltaY > 20 && isJumping) {
+      // ✅ تسريع الهبوط أثناء القفز
+      _velocityY += 0.005 * (deltaY / 50).abs();
+    }
   }
 
   // هجوم برمي الطرد
@@ -178,8 +284,6 @@ class Character {
       Future.delayed(const Duration(milliseconds: 200), () {
         isAttacking = false;
       });
-
-      print('📦 Character attacked with package!');
     }
   }
 
@@ -195,14 +299,12 @@ class Character {
     hasShield = true;
     isInvincible = true;
     shieldEndTime = DateTime.now().add(duration);
-    print('🛡️ Shield activated for ${duration.inSeconds} seconds');
   }
 
   void deactivateShield() {
     hasShield = false;
     isInvincible = false;
     shieldEndTime = null;
-    print('🛡️ Shield deactivated');
   }
 
   void updateShield() {
@@ -221,13 +323,11 @@ class Character {
     if (health <= 0) {
       loseLife();
     }
-    print('💔 Character took $damage damage. Health: $health/$maxHealth');
   }
 
   void heal(int amount) {
     health += amount;
     if (health > maxHealth) health = maxHealth;
-    print('❤️ Character healed $amount. Health: $health/$maxHealth');
   }
 
   void loseLife() {
@@ -235,7 +335,6 @@ class Character {
     health = maxHealth;
     _isOnPlatform = false;
     _platformY = null;
-    print('💔 Character lost a life. Lives remaining: $lives');
   }
 
   bool get isDead => lives <= 0;
@@ -243,24 +342,30 @@ class Character {
   void addLife() {
     if (lives < 3) {
       lives++;
-      print('➕ Character gained a life. Lives: $lives');
     }
   }
 
-  // دالة update محسنة لدعم المنصات
+  // ✅ دالة update محسنة لنظام الحركة السلسة
   void update() {
     updateShield();
     updatePackages();
 
+    // ✅ تطبيق الحركة السلسة
+    x = x + (_targetX - x) * _moveSmoothing;
+
+    if (!isJumping && !_isOnPlatform) {
+      y = y + (_targetY - y) * _moveSmoothing;
+    }
+
+    // ✅ تحديث الفيزياء (الجاذبية والقفز)
     if (!_isOnPlatform) {
       _velocityY += gravity * weight;
       y += _velocityY;
 
-      // ✅ منع تجاوز الحد الأقصى للقفزة
-      if (isJumping && y <= _currentMaxJumpHeight) {
+      // ✅ التحكم في القفز للأعلى
+      if (isJumping && !_isDownJumping && y <= _currentMaxJumpHeight) {
         y = _currentMaxJumpHeight;
         _velocityY = gravity * weight;
-        print('⬆️ وصل للحد الأقصى للقفزة: ${y.toStringAsFixed(3)}');
       }
     }
 
@@ -274,36 +379,30 @@ class Character {
       y = _platformY! - height;
       _velocityY = 0.0;
       isJumping = false;
+      _isLongJump = false;
+      _isDownJumping = false;
     } else {
       if (y >= groundY) {
         y = groundY;
         _velocityY = 0.0;
         isJumping = false;
+        _isLongJump = false;
+        _isDownJumping = false;
         jumpCount = 0;
         _currentMaxJumpHeight = 0.0;
+        _targetY = y; // ✅ تحديث الهدف العمودي عند الهبوط
       }
-    }
-
-    // تحديث الحركة الأفقية
-    if (_isMovingLeft) {
-      x -= _moveSpeed;
-    }
-    if (_isMovingRight) {
-      x += _moveSpeed;
     }
 
     // ✅ تطبيق الحدود النهائية
     x = x.clamp(0.05, 0.95);
     y = y.clamp(0.1, 0.85);
-
-    // ❌ لا تضيف أي كود متعلق بـ _gameTime هنا
   }
 
   // دوال المنصات
   void leavePlatform() {
     _isOnPlatform = false;
     _platformY = null;
-    print('⬇️ Character left platform');
   }
 
   void standOnPlatform(double platformTop) {
@@ -311,8 +410,10 @@ class Character {
     _platformY = platformTop;
     _velocityY = 0.0;
     isJumping = false;
+    _isLongJump = false;
+    _isDownJumping = false;
     y = platformTop - height;
-    print('🧱 Character standing on platform at Y: $y');
+    _targetY = y; // ✅ تحديث الهدف العمودي عند الوقوف على المنصة
   }
 
   // دوال التحقق من التصادم
@@ -326,7 +427,6 @@ class Character {
     final horizontalOverlap = (x + width/2) > (enemy.x - enemy.width/2) &&
         (x - width/2) < (enemy.x + enemy.width/2);
 
-    // ✅ استخدام نفس منطق القفز على الرأس
     final bool isAboveEnemy = characterBottom <= headRegionBottom;
     final bool isFalling = _velocityY > 0;
     final bool isInHeadRegion = characterBottom >= enemyTop &&
@@ -362,7 +462,6 @@ class Character {
   // إعادة تعيين عداد القفزات
   void resetJumpCount() {
     if (jumpCount > 0) {
-      print('📊 Reset jump count: $jumpCount jumps');
       jumpCount = 0;
     }
   }
@@ -408,28 +507,5 @@ class Character {
     if (!hasShield || shieldEndTime == null) return null;
     final now = DateTime.now();
     return shieldEndTime!.isAfter(now) ? shieldEndTime!.difference(now) : Duration.zero;
-  }
-
-  // طباعة حالة الشخصية
-  void printStatus() {
-    print('''
-🎮 Character Status:
-   Position: ($x, $y)
-   Size: ${width}x$height
-   State: ${isJumping ? 'Jumping' : isDucking ? 'Ducking' : isAttacking ? 'Attacking' : 'Running'}
-   On Platform: $_isOnPlatform
-   Platform Y: $_platformY
-   Velocity Y: $_velocityY
-   Jump Count: $jumpCount
-   Weight: $weight
-   Health: $health/$maxHealth
-   Lives: $lives
-   Shield: $hasShield
-   Invincible: $isInvincible
-   Remaining Shield: ${remainingShieldTime?.inSeconds}s
-   Packages: ${packages.length}
-   Physics: Gravity=$gravity, Friction=$groundFriction
-   Movement: Left=$_isMovingLeft, Right=$_isMovingRight, Speed=$_moveSpeed
-''');
   }
 }

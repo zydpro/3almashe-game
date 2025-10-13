@@ -26,7 +26,8 @@
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_android-2.2.18/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.13/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/unity_ads_plugin-0.3.27/android" />
-            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/vibration-1.9.0/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.24/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/vibration-3.1.4/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.8.14/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/wakelock_plus-1.4.0/android" />
             <option value="$PROJECT_DIR$/android" />

@@ -1,8 +1,8 @@
 class PhysicsConfig {
   // === إعدادات الفيزياء للحركة الواقعية ===
-  static const double realisticGravity = 0.002;
+  static const double realisticGravity = 0.0018;
   static const double realisticJumpPower = -0.038;
-  static const double characterWeight = 1.5;
+  static const double characterWeight = 1.1;
   static const double groundFriction = 0.98;
 
   // === إعدادات القفز المحسنة ===
@@ -11,7 +11,8 @@ class PhysicsConfig {
   static const double jumpVelocityDecay = 0.95;
 
   // === إعدادات الحركة الأفقية ===
-  static const double runSpeed = 0.015;
+  static const double maxHorizontalSpeed = 0.02;
+  static const double maxVerticalSpeed = 0.015;
   static const double acceleration = 0.001;
   static const double deceleration = 0.002;
 
@@ -39,5 +40,22 @@ class PhysicsConfig {
 
   static bool isOnGround(double y, double height) {
     return (y - (groundLevel - height)).abs() < collisionTolerance;
+  }
+
+  // ✅ دوال مساعدة للحركة
+  static double calculateHorizontalSpeed(bool isMoving, double currentSpeed) {
+    if (isMoving) {
+      return (currentSpeed + acceleration).clamp(0.0, maxHorizontalSpeed);
+    } else {
+      return (currentSpeed - deceleration).clamp(0.0, maxHorizontalSpeed);
+    }
+  }
+
+  static double calculateVerticalSpeed(bool isMoving, double currentSpeed) {
+    if (isMoving) {
+      return (currentSpeed + acceleration).clamp(0.0, maxVerticalSpeed);
+    } else {
+      return (currentSpeed - deceleration).clamp(0.0, maxVerticalSpeed);
+    }
   }
 }

@@ -32,10 +32,14 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2004983774/android.unity_ads_plugin.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-47031418/android.vibration.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.iml" filepath="$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/1413752805/android.url_launcher_android.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.iml" filepath="$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-2077979004/android.vibration.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/-1139399472/android.video_player_android.main.iml" />

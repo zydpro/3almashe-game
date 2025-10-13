@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../Languages/LanguageProvider.dart';
 import '../services/ads_service.dart';
 import '../services/game_data_service.dart';
 import 'game_screen.dart';
 import 'main_menu_screen.dart';
 import 'levels_screen.dart';
 import '../models/level_data.dart';
+import '../Languages/localization.dart';
 
 class GameOverScreen extends StatelessWidget {
   final int score;
@@ -20,6 +23,7 @@ class GameOverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     bool levelCompleted = levelData != null && score >= levelData!.targetScore;
     bool nextLevelUnlocked = levelCompleted && levelData!.levelNumber < 100;
     int coinsEarned = score ~/ 10;
@@ -27,152 +31,384 @@ class GameOverScreen extends StatelessWidget {
     _saveGameProgress();
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: levelCompleted
-                ? [
-              const Color(0xFF4CAF50),
-              const Color(0xFF2E7D32),
-            ]
-                : [
-              const Color(0xFF2E4057),
-              const Color(0xFF8B0000),
+      backgroundColor: Colors.black54,
+      body: SafeArea(
+        child: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          constraints: BoxConstraints(
+            maxWidth: 400, // ✅ تحديد أقصى عرض
+          ),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[900]!.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: levelCompleted ? Colors.green : Colors.red,
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ إضافة الهيدر مع زر اللغة
+              _buildHeader(context, l10n),
+
+              const SizedBox(height: 20),
+
+              // محتوى النتيجة
+              _buildContentSection(context, l10n, levelCompleted, score, coinsEarned, levelData),
+
+              const SizedBox(height: 30),
+
+              // أزرار الإجراءات
+              _buildActionButtons(l10n, levelCompleted, nextLevelUnlocked, context),
             ],
           ),
         ),
-        child: SafeArea(
-          child: Column(
+      ),
+      ),
+    );
+  }
+
+  // ✅ إضافة الهيدر مع زر اللغة
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // ✅ إصلاح: استخدام SizedBox بعرض ثابت بدلاً من const
+          SizedBox(
+            width: 60,
+            child: Container(), // عنصر فارغ للمساحة
+          ),
+
+          // ✅ إصلاح: استخدام Expanded مع تكبير النص
+          Expanded(
+            child: Text(
+              l10n.levelComplete,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24, // ✅ تقليل حجم الخط قليلاً
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.green,
+                    blurRadius: 10,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ إصلاح: تحديد حجم ثابت لزر اللغة
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: _buildLanguageToggleButton(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ زر تبديل اللغة
+  Widget _buildLanguageToggleButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+        languageProvider.toggleLanguage();
+      },
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.01),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.01),
+            width: 0.1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Consumer<LanguageProvider>(
+          builder: (context, languageProvider, child) {
+            return Center(
+              child: languageProvider.isArabic
+                  ? _buildEnglishIcon()
+                  : _buildArabicIcon(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ✅ أيقونة اللغة الإنجليزية
+  Widget _buildEnglishIcon() {
+    return Image.asset(
+      'assets/images/main_menu/english_icon.png',
+      width: 50,
+      height: 50,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF012169), Color(0xFFC8102E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: const Center(
+            child: Text(
+              'EN',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ أيقونة اللغة العربية
+  Widget _buildArabicIcon() {
+    return Image.asset(
+      'assets/images/main_menu/arabic_icon.png',
+      width: 50,
+      height: 50,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: const Color(0xFF006233),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: const Center(
+            child: Text(
+              'ع',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// ✅ قسم المحتوى - تم الإصلاح
+  Widget _buildContentSection(BuildContext context, AppLocalizations l10n, bool levelCompleted, int score, int coinsEarned, LevelData? levelData) {
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.8, // ✅ تحديد أقصى عرض
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            levelCompleted ? Icons.celebration : Icons.sentiment_dissatisfied,
+            size: 80,
+            color: levelCompleted ? Colors.green : Colors.red,
+          ),
+          const SizedBox(height: 20),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Text(
+                  '${l10n.score}: $score',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    color: Colors.yellow,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 10),
+
+                // ✅ إصلاح: استخدام null-check operator
+                if (levelData != null) ...[
+                  Text(
+                    '${levelData.getName(l10n)} - ${l10n.target}: ${levelData.targetScore}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
+                if (levelCompleted) ...[
+                  Text(
+                    l10n.gameOverLevelCompleted,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.lightGreen,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
+                Text(
+                  '${l10n.gameOverCoinsEarned}: $coinsEarned',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ أزرار الإجراءات
+  Widget _buildActionButtons(AppLocalizations l10n, bool levelCompleted, bool nextLevelUnlocked, BuildContext context) {
+    return Column(
+      children: [
+        // زر الاستمرار بمشاهدة إعلان
+        if (!levelCompleted) ...[
+          _buildOptionButton(
+            icon: Icons.play_arrow,
+            text: l10n.gameOverContinue,
+            description: l10n.gameOverContinueDesc,
+            onTap: () => _showAdAndContinue(context),
+            color: Colors.green,
+          ),
+          const SizedBox(height: 15),
+        ],
+
+        // زر المرحلة التالية
+        if (nextLevelUnlocked) ...[
+          _buildOptionButton(
+            icon: Icons.arrow_forward,
+            text: l10n.nextLevel,
+            description: l10n.gameOverNextLevelDesc,
+            onTap: () => _showAdAndGoToNextLevel(context),
+            color: Colors.blue,
+          ),
+          const SizedBox(height: 15),
+        ],
+
+        // زر إعادة اللعب
+        _buildOptionButton(
+          icon: Icons.refresh,
+          text: l10n.restartLevel,
+          description: l10n.gameOverRestartDesc,
+          onTap: () => _showAdAndRestartLevel(context),
+          color: Colors.orange,
+        ),
+        const SizedBox(height: 15),
+
+        // زر قائمة المراحل
+        _buildOptionButton(
+          icon: Icons.list,
+          text: l10n.levelsMenu,
+          description: l10n.gameOverLevelsDesc,
+          onTap: () => _showAdAndGoToLevels(context),
+          color: Colors.purple,
+        ),
+        const SizedBox(height: 15),
+
+        // زر القائمة الرئيسية
+        _buildOptionButton(
+          icon: Icons.home,
+          text: l10n.mainMenu,
+          description: l10n.gameOverMainMenuDesc,
+          onTap: () => _showAdAndGoToMainMenu(context),
+          color: Colors.grey,
+        ),
+      ],
+    );
+  }
+
+  // ✅ زر الإجراءات - تصميم جديد
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String text,
+    required String description,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Row(
             children: [
-              // العنوان والنتيجة
+              Icon(icon, color: color, size: 30),
+              const SizedBox(width: 15),
               Expanded(
-                flex: 2,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      levelCompleted ? Icons.celebration : Icons.sentiment_dissatisfied,
-                      size: 100,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 20),
                     Text(
-                      levelCompleted ? 'أحسنت!' : 'انتهت اللعبة!',
-                      style: const TextStyle(
-                        fontSize: 36,
+                      text,
+                      style: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black54,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
+                        color: color,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 4),
                     Text(
-                      'نقاطك: $score',
+                      description,
                       style: const TextStyle(
-                        fontSize: 24,
-                        color: Colors.yellow,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (levelData != null) ...[
-                      const SizedBox(height: 5),
-                      Text(
-                        '${levelData!.name} - الهدف: ${levelData!.targetScore}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      if (levelCompleted) ...[
-                        const SizedBox(height: 5),
-                        const Text(
-                          'تم إنجاز المرحلة بنجاح!',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.lightGreen,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      'العملات المكتسبة: $coinsEarned',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.amber,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.white70,
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // أزرار الإجراءات
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // زر الاستمرار بمشاهدة إعلان
-                      if (!levelCompleted) ...[
-                        _buildActionButton(
-                          'استمر (شاهد إعلان)',
-                          Icons.play_arrow,
-                          Colors.green,
-                              () => _showAdAndContinue(context),
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-
-                      // زر المرحلة التالية
-                      if (nextLevelUnlocked) ...[
-                        _buildActionButton(
-                          'المرحلة التالية',
-                          Icons.arrow_forward,
-                          Colors.blue,
-                              () => _showAdAndGoToNextLevel(context),
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-
-                      // زر إعادة اللعب
-                      _buildActionButton(
-                        'إعادة اللعب',
-                        Icons.refresh,
-                        Colors.orange,
-                            () => _showAdAndRestartLevel(context),
-                      ),
-                      const SizedBox(height: 15),
-
-                      // زر قائمة المراحل
-                      _buildActionButton(
-                        'قائمة المراحل',
-                        Icons.list,
-                        Colors.purple,
-                            () => _showAdAndGoToLevels(context),
-                      ),
-                      const SizedBox(height: 15),
-
-                      // زر القائمة الرئيسية
-                      _buildActionButton(
-                        'القائمة الرئيسية',
-                        Icons.home,
-                        Colors.grey,
-                            () => _showAdAndGoToMainMenu(context),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],
@@ -185,62 +421,19 @@ class GameOverScreen extends StatelessWidget {
   void _saveGameProgress() {
     if (levelData != null) {
       GameDataService.saveGameProgress(score, levelData!.levelNumber);
-      print('💾 تم حفظ التقدم: النقاط $score - المستوى ${levelData!.levelNumber}');
     }
   }
 
-  Widget _buildActionButton(
-      String text,
-      IconData icon,
-      Color color,
-      VoidCallback onPressed,
-      ) {
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          elevation: 8,
-          shadowColor: Colors.black.withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showAdAndContinue(BuildContext context) {
-    print('🎬 المستخدم ضغط على "استمر (شاهد إعلان)"');
-
-    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+    _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showRewardedAd(
       onAdStarted: () {
-        print('▶️ إعلان الاستمرار بدأ');
-        Navigator.pop(context); // إغلاق dialog التحميل
-        _showAdPlayingDialog(context, 'إعلان مكافأة', 'ستستمر اللعبة بعد انتهاء الإعلان');
+        Navigator.pop(context);
+        _showAdPlayingDialog(context, AppLocalizations.of(context).gameOverAdTitle, AppLocalizations.of(context).gameOverAdDesc);
       },
       onAdCompleted: () {
-        print('✅ إعلان الاستمرار اكتمل - الانتقال للعبة');
-        Navigator.pop(context); // إغلاق dialog العرض
+        Navigator.pop(context);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -249,23 +442,19 @@ class GameOverScreen extends StatelessWidget {
         );
       },
       onAdFailed: (error) {
-        print('❌ إعلان الاستمرار فشل: $error');
-        Navigator.pop(context); // إغلاق dialog
+        Navigator.pop(context);
         _showAdErrorSnackBar(context, error);
       },
     );
   }
 
   void _showAdAndGoToNextLevel(BuildContext context) async {
-    print('🚀 المستخدم ضغط على "المرحلة التالية"');
-
     if (levelData != null && levelData!.levelNumber < 100) {
       try {
         LevelData nextLevel = await LevelData.getLevelData(levelData!.levelNumber + 1);
         _showAdAndStartNextLevel(context, nextLevel);
       } catch (e) {
-        print('❌ خطأ في تحميل المرحلة التالية: $e');
-        _showErrorDialog(context, 'تعذر تحميل المرحلة التالية');
+        _showErrorDialog(context, AppLocalizations.of(context).gameOverLoadError);
       }
     } else {
       _showCompletionDialog(context);
@@ -273,90 +462,42 @@ class GameOverScreen extends StatelessWidget {
   }
 
   void _showAdAndStartNextLevel(BuildContext context, LevelData nextLevel) {
-    print('🎯 بدء المرحلة التالية مع إعلان: ${nextLevel.name}');
-
-    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+    _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showInterstitialAd(
-      onAdStarted: () {
-        print('▶️ إعلان المرحلة التالية بدأ');
-        Navigator.pop(context);
-      },
-      onAdCompleted: () {
-        print('✅ إعلان المرحلة التالية اكتمل');
-        _navigateToLevel(context, nextLevel);
-      },
-      onAdFailed: (error) {
-        print('❌ إعلان المرحلة التالية فشل: $error');
-        Navigator.pop(context);
-        _navigateToLevel(context, nextLevel);
-      },
+      onAdStarted: () => Navigator.pop(context),
+      onAdCompleted: () => _navigateToLevel(context, nextLevel),
+      onAdFailed: (error) => _navigateToLevel(context, nextLevel),
     );
   }
 
   void _showAdAndRestartLevel(BuildContext context) {
-    print('🔄 المستخدم ضغط على "إعادة اللعب" مع إعلان');
-
-    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+    _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showInterstitialAd(
-      onAdStarted: () {
-        print('▶️ إعلان إعادة اللعب بدأ');
-        Navigator.pop(context);
-      },
-      onAdCompleted: () {
-        print('✅ إعلان إعادة اللعب اكتمل');
-        _restartLevel(context);
-      },
-      onAdFailed: (error) {
-        print('❌ إعلان إعادة اللعب فشل: $error');
-        Navigator.pop(context);
-        _restartLevel(context);
-      },
+      onAdStarted: () => Navigator.pop(context),
+      onAdCompleted: () => _restartLevel(context),
+      onAdFailed: (error) => _restartLevel(context),
     );
   }
 
   void _showAdAndGoToLevels(BuildContext context) {
-    print('📋 المستخدم ضغط على "قائمة المراحل" مع إعلان');
-
-    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+    _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showInterstitialAd(
-      onAdStarted: () {
-        print('▶️ إعلان قائمة المراحل بدأ');
-        Navigator.pop(context);
-      },
-      onAdCompleted: () {
-        print('✅ إعلان قائمة المراحل اكتمل');
-        _goToLevels(context);
-      },
-      onAdFailed: (error) {
-        print('❌ إعلان قائمة المراحل فشل: $error');
-        Navigator.pop(context);
-        _goToLevels(context);
-      },
+      onAdStarted: () => Navigator.pop(context),
+      onAdCompleted: () => _goToLevels(context),
+      onAdFailed: (error) => _goToLevels(context),
     );
   }
 
   void _showAdAndGoToMainMenu(BuildContext context) {
-    print('🏠 المستخدم ضغط على "القائمة الرئيسية" مع إعلان');
-
-    _showLoadingDialog(context, 'جاري تحميل الإعلان...');
+    _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showInterstitialAd(
-      onAdStarted: () {
-        print('▶️ إعلان القائمة الرئيسية بدأ');
-        Navigator.pop(context);
-      },
-      onAdCompleted: () {
-        print('✅ إعلان القائمة الرئيسية اكتمل');
-        _goToMainMenu(context);
-      },
-      onAdFailed: (error) {
-        print('❌ إعلان القائمة الرئيسية فشل: $error');
-        Navigator.pop(context);
-        _goToMainMenu(context);
-      },
+      onAdStarted: () => Navigator.pop(context),
+      onAdCompleted: () => _goToMainMenu(context),
+      onAdFailed: (error) => _goToMainMenu(context),
     );
   }
 
@@ -392,7 +533,7 @@ class GameOverScreen extends StatelessWidget {
             children: [
               const Icon(Icons.video_library, size: 60, color: Colors.blue),
               const SizedBox(height: 10),
-              const Text('يتم عرض الإعلان...'),
+              Text(AppLocalizations.of(context).adPlaying),
               const SizedBox(height: 10),
               LinearProgressIndicator(
                 backgroundColor: Colors.grey[300],
@@ -417,38 +558,19 @@ class GameOverScreen extends StatelessWidget {
   void _showAdErrorSnackBar(BuildContext context, String error) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('فشل في تحميل الإعلان: $error'),
+        content: Text('${AppLocalizations.of(context).adError}: $error'),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
-          label: 'حاول مرة أخرى',
+          label: AppLocalizations.of(context).retry,
           textColor: Colors.white,
-          onPressed: () {
-            // يمكن إضافة إعادة المحاولة إذا لزم الأمر
-          },
+          onPressed: () {},
         ),
       ),
     );
   }
 
-  Widget _buildLevelStat(String title, String value) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-
   void _navigateToLevel(BuildContext context, LevelData nextLevel) {
-    print('🔄 الانتقال إلى المرحلة: ${nextLevel.name}');
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -458,8 +580,6 @@ class GameOverScreen extends StatelessWidget {
   }
 
   void _restartLevel(BuildContext context) {
-    print('🎮 إعادة تشغيل المرحلة: ${levelData!.name}');
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -471,47 +591,44 @@ class GameOverScreen extends StatelessWidget {
   void _goToLevels(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => const LevelsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const LevelsScreen()),
           (route) => false,
     );
   }
 
   void _goToMainMenu(BuildContext context) {
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => const MainMenuScreen(),
-      ),
-          (route) => false,
+      MaterialPageRoute(builder: (context) => const MainMenuScreen()),
     );
   }
 
   void _showCompletionDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('🎉 مبروك!'),
-          content: const Column(
+          title: Text('🎉 ${l10n.gameOverCongratulations}'),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.celebration, size: 60, color: Colors.amber),
-              SizedBox(height: 15),
+              const Icon(Icons.celebration, size: 60, color: Colors.amber),
+              const SizedBox(height: 15),
               Text(
-                'لقد أكملت جميع المراحل!',
+                l10n.gameOverAllLevelsCompleted,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
-                'أنت بطل اللعبة! 🏆',
+                l10n.gameOverChampion,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.green,
                 ),
@@ -521,7 +638,7 @@ class GameOverScreen extends StatelessWidget {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('رائع!'),
+              child: Text(l10n.gameOverAwesome),
             ),
           ],
         );
@@ -534,18 +651,18 @@ class GameOverScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.error, color: Colors.red),
-              SizedBox(width: 10),
-              Text('خطأ'),
+              const Icon(Icons.error, color: Colors.red),
+              const SizedBox(width: 10),
+              Text(AppLocalizations.of(context).error),
             ],
           ),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('حسناً'),
+              child: Text(AppLocalizations.of(context).close),
             ),
           ],
         );

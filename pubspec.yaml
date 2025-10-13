@@ -20,19 +20,31 @@ dependencies:
   video_player: ^2.8.2
   chewie: ^1.7.0
   unity_ads_plugin: ^0.3.27
+  url_launcher: ^6.1.11
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
 
+# ✅ تم التصحيح: يجب أن يكون خارج flutter:
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#1a2b3c"
+  adaptive_icon_foreground: "assets/icon/adaptive_icon.png"
+  android_adaptive_icon_foreground: "assets/icon/adaptive_icon.png"
+  android_adaptive_icon_background: "#1a2b3c"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     # === الشخصيات الأساسية ===
@@ -91,10 +103,11 @@ flutter:
     - assets/images/main_menu/store_icon.png
     - assets/images/main_menu/about_icon.png
     - assets/images/main_menu/settings_icon.png
-    - assets/images/main_menu/like_icon.png
-    - assets/images/main_menu/share_icon.png
+    - assets/images/main_menu/arabic_icon.png
+    - assets/images/main_menu/english_icon.png
+    - assets/images/main_menu/items_icon.png
     - assets/images/main_menu/fallback_pattern.png
-    - assets/images/main_menu/menu_background.mp4
+    - assets/videos/menu_background.WEBM
 
     # === الأصوات الأساسية ===
     - assets/sounds/effects/jump.wav
@@ -111,6 +124,7 @@ flutter:
 
     # === الأيقونة ===
     - assets/icon/app_icon.png
+    - assets/icon/adaptive_icon.png
 
   fonts:
     - family: Cairo

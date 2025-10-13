@@ -1,11 +1,17 @@
+import 'package:almashe_game/Languages/language_service.dart';
+import 'package:almashe_game/screens/items_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import '../Languages/LanguageProvider.dart';
+import '../Languages/localization.dart';
 import '../widgets/animated_logo.dart';
+import 'Store_Screen.dart';
 import 'game_screen.dart';
 import 'levels_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
+import 'package:provider/provider.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -14,7 +20,12 @@ class MainMenuScreen extends StatefulWidget {
   State<MainMenuScreen> createState() => _MainMenuScreenState();
 }
 
-class _MainMenuScreenState extends State<MainMenuScreen> {
+class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProviderStateMixin {
+
+  // اعدادات اللغة
+  late AnimationController _languageAnimationController;
+  late Animation<double> _languageScaleAnimation;
+
   // إعدادات الظل للأيقونات الجانبية (الزوايا)
   double cornerShadowBlur = 10.0;
   double cornerShadowSpread = 2.0;
@@ -59,11 +70,143 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void initState() {
     super.initState();
     _initializeVideo();
+    _initLanguageAnimation();
+  }
+
+  void _initLanguageAnimation() {
+    _languageAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _languageScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.7), weight: 0.5),
+      TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 0.5),
+    ]).animate(CurvedAnimation(
+      parent: _languageAnimationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+// ✅ زر تبديل اللغة مع الأنيميشن - بنفس إعدادات الأزرار الجانبية
+  Widget _buildLanguageToggleButton() {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
+    return GestureDetector(
+      onTap: () => _toggleLanguage(languageProvider),
+      child: AnimatedBuilder(
+        animation: _languageAnimationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _languageScaleAnimation.value,
+            child: Container(
+              width: cornerButtonSize, // استخدام نفس حجم الأزرار الجانبية
+              height: cornerButtonSize, // استخدام نفس حجم الأزرار الجانبية
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.01),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.01),
+                  width: 0.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: cornerShadowColor, // نفس لون ظل الأزرار الجانبية
+                    blurRadius: cornerShadowBlur, // نفس وضوح ظل الأزرار الجانبية
+                    spreadRadius: cornerShadowSpread, // نفس انتشار ظل الأزرار الجانبية
+                    offset: cornerShadowOffset, // نفس إزاحة ظل الأزرار الجانبية
+                  ),
+                ],
+              ),
+              child: Center(
+                child: languageProvider.isArabic
+                    ? _buildEnglishIcon()  // إذا العربية ظاهرة، اعرض الإنجليزية
+                    : _buildArabicIcon(),   // إذا الإنجليزية ظاهرة، اعرض العربية
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+// ✅ أيقونة اللغة الإنجليزية - بدون ظل إضافي
+  Widget _buildEnglishIcon() {
+    return Image.asset(
+      'assets/images/main_menu/english_icon.png',
+      width: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+      height: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+          height: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF012169), Color(0xFFC8102E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(cornerIconSize / 2), // دائري بالكامل
+            // إزالة الظل الإضافي - سيتم تطبيق الظل من الحاوية الرئيسية
+          ),
+          child: const Center(
+            child: Text(
+              'EN',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14, // حجم خط مناسب
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// ✅ أيقونة اللغة العربية - بدون ظل إضافي
+  Widget _buildArabicIcon() {
+    return Image.asset(
+      'assets/images/main_menu/arabic_icon.png',
+      width: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+      height: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+          height: cornerIconSize, // استخدام نفس حجم أيقونات الأزرار الجانبية
+          decoration: BoxDecoration(
+            color: const Color(0xFF006233),
+            borderRadius: BorderRadius.circular(cornerIconSize / 2), // دائري بالكامل
+            // إزالة الظل الإضافي - سيتم تطبيق الظل من الحاوية الرئيسية
+          ),
+          child: const Center(
+            child: Text(
+              'ع',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20, // حجم خط مناسب
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ دالة تبديل اللغة
+  Future<void> _toggleLanguage(LanguageProvider languageProvider) async {
+    await _languageAnimationController.forward();
+    await languageProvider.toggleLanguage();
+    await _languageAnimationController.reverse();
   }
 
   void _initializeVideo() async {
     try {
-      print('🚀 بدء تحميل الفيديو...');
+      // print('🚀 بدء تحميل الفيديو...');
 
       setState(() {
         _isLoading = true;
@@ -71,14 +214,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       });
 
       _videoPlayerController = VideoPlayerController.asset(
-        'assets/images/main_menu/menu_background.mp4',
+        'assets/videos/menu_background.WEBM',
       );
 
       // إضافة مستمع لمراقبة حالة الفيديو
       _videoPlayerController.addListener(() {
         if (_videoPlayerController.value.hasError) {
           final error = _videoPlayerController.value.errorDescription ?? 'خطأ غير معروف';
-          print('❌ خطأ في الفيديو: $error');
+          // print('❌ خطأ في الفيديو: $error');
           setState(() {
             _videoError = error;
             _isVideoInitialized = false;
@@ -88,23 +231,23 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
         // طباعة معلومات التصحيح
         if (_videoPlayerController.value.isInitialized) {
-          print('📊 حالة الفيديو:');
-          print('  - الأبعاد: ${_videoPlayerController.value.size}');
-          print('  - المدة: ${_videoPlayerController.value.duration}');
-          print('  - التشغيل: ${_videoPlayerController.value.isPlaying}');
-          print('  - التحميل: ${_videoPlayerController.value.isBuffering}');
+          // print('📊 حالة الفيديو:');
+          // print('  - الأبعاد: ${_videoPlayerController.value.size}');
+          // print('  - المدة: ${_videoPlayerController.value.duration}');
+          // print('  - التشغيل: ${_videoPlayerController.value.isPlaying}');
+          // print('  - التحميل: ${_videoPlayerController.value.isBuffering}');
         }
       });
 
-      print('🔄 جاري تهيئة الفيديو...');
+      // print('🔄 جاري تهيئة الفيديو...');
       await _videoPlayerController.initialize();
 
-      print('✅ الفيديو مهيأ: ${_videoPlayerController.value.isInitialized}');
+      // print('✅ الفيديو مهيأ: ${_videoPlayerController.value.isInitialized}');
 
       if (_videoPlayerController.value.isInitialized && !_videoPlayerController.value.hasError) {
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController,
-          autoPlay: false, // تم التغيير إلى false لمنع التشغيل التلقائي
+          autoPlay: true, // تم التغيير إلى false لمنع التشغيل التلقائي
           looping: true,
           showControls: false,
           autoInitialize: true,
@@ -134,7 +277,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             ),
           ),
           errorBuilder: (context, errorMessage) {
-            print('🎬 خطأ في Chewie: $errorMessage');
+            // print('🎬 خطأ في Chewie: $errorMessage');
             return _buildErrorWidget(errorMessage);
           },
         );
@@ -147,7 +290,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           _showPlayButton = true; // عرض زر التشغيل
         });
 
-        print('✅ الفيديو جاهز - في انتظار تفاعل المستخدم');
+        // print('✅ الفيديو جاهز - في انتظار تفاعل المستخدم');
       } else {
         final error = _videoPlayerController.value.errorDescription ?? 'الفيديو لم يتم تهيئته بشكل صحيح';
         setState(() {
@@ -157,7 +300,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         });
       }
     } catch (e) {
-      print('💥 خطأ كبير في تحميل الفيديو: $e');
+      // print('💥 خطأ كبير في تحميل الفيديو: $e');
       setState(() {
         _videoError = 'خطأ في تحميل الفيديو: $e';
         _isVideoInitialized = false;
@@ -170,17 +313,26 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     if (_videoPlayerController.value.isInitialized &&
         !_videoPlayerController.value.isPlaying) {
       _videoPlayerController.play().then((_) {
-        print('🎉 الفيديو يعمل الآن بعد تفاعل المستخدم!');
+        // print('🎉 الفيديو يعمل الآن بعد تفاعل المستخدم!');
         setState(() {
           _hasUserInteracted = true;
           _showPlayButton = false;
         });
       }).catchError((error) {
-        print('❌ خطأ في تشغيل الفيديو: $error');
+        // print('❌ خطأ في تشغيل الفيديو: $error');
         setState(() {
           _videoError = 'خطأ في تشغيل الفيديو: $error';
         });
       });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // إعادة تشغيل الفيديو عندما تعود إلى الشاشة الرئيسية
+    if (_isVideoInitialized && !_videoPlayerController.value.isPlaying) {
+      _playVideoAfterInteraction();
     }
   }
 
@@ -276,6 +428,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
   @override
   void dispose() {
+    _languageAnimationController.dispose();
     _videoPlayerController.dispose();
     _chewieController?.dispose();
     super.dispose();
@@ -283,6 +436,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Languages = AppLocalizations.of(context);
+
     return Scaffold(
       body: GestureDetector(
         onTap: () {
@@ -317,78 +472,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
 
-            // زر التشغيل الكبير
-            // if (_showPlayButton && _isVideoInitialized && !_isLoading)
-            //   Positioned.fill(
-            //     child: Container(
-            //       color: Colors.black.withOpacity(0.3),
-            //       child: Center(
-            //         child: Column(
-            //           mainAxisAlignment: MainAxisAlignment.center,
-            //           children: [
-            //             // GestureDetector(
-            //             //   onTap: _playVideoAfterInteraction,
-            //             //   child: Container(
-            //             //     width: 100,
-            //             //     height: 100,
-            //             //     decoration: BoxDecoration(
-            //             //       color: Colors.yellow.withOpacity(0.9),
-            //             //       shape: BoxShape.circle,
-            //             //       boxShadow: [
-            //             //         BoxShadow(
-            //             //           color: Colors.black.withOpacity(0.5),
-            //             //           blurRadius: 15,
-            //             //           spreadRadius: 2,
-            //             //           offset: Offset(0, 4),
-            //             //         ),
-            //             //       ],
-            //             //     ),
-            //             //     // child: Icon(
-            //             //     //   Icons.play_arrow,
-            //             //     //   size: 60,
-            //             //     //   color: Colors.black,
-            //             //     // ),
-            //             //   ),
-            //             // ),
-            //             SizedBox(height: 20),
-            //             // Text(
-            //             //   'انقر للتشغيل',
-            //             //   style: TextStyle(
-            //             //     color: Colors.white,
-            //             //     fontSize: 24,
-            //             //     fontWeight: FontWeight.bold,
-            //             //     shadows: [
-            //             //       Shadow(
-            //             //         color: Colors.black.withOpacity(0.8),
-            //             //         offset: Offset(2, 2),
-            //             //         blurRadius: 4,
-            //             //       ),
-            //             //     ],
-            //             //   ),
-            //             // ),
-            //             SizedBox(height: 10),
-            //             // Text(
-            //             //   'أو انقر في أي مكان على الشاشة',
-            //             //   style: TextStyle(
-            //             //     color: Colors.white70,
-            //             //     fontSize: 16,
-            //             //     shadows: [
-            //             //       Shadow(
-            //             //         color: Colors.black.withOpacity(0.6),
-            //             //         offset: Offset(1, 1),
-            //             //         blurRadius: 2,
-            //             //       ),
-            //             //     ],
-            //             //   ),
-            //             // ),
-            //           ],
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-
             // عرض معلومات الخطأ إذا وجد
-
             if (_videoError.isNotEmpty && !_isLoading)
               Positioned(
                 top: 50,
@@ -442,28 +526,28 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             SafeArea(
               child: Stack(
                 children: [
-                  // Top right - Share icon (أيقونة جانبية)
+                  // Top right - items icon (أيقونة جانبية)
                   Positioned(
                     top: 20,
                     right: 20,
                     child: _buildCornerIconButton(
-                      icon: 'assets/images/main_menu/share_icon.png',
+                      icon: 'assets/images/main_menu/items_icon.png',
                       onPressed: () {
-                        _shareGame(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const itemsScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),
 
-                  // Top left - Like icon (أيقونة جانبية)
+                  // ✅ Top left - Language toggle button (زر تبديل اللغة)
                   Positioned(
                     top: 20,
                     left: 20,
-                    child: _buildCornerIconButton(
-                      icon: 'assets/images/main_menu/like_icon.png',
-                      onPressed: () {
-                        _openLikeLink(context);
-                      },
-                    ),
+                    child: _buildLanguageToggleButton(),
                   ),
 
                   // Bottom right - Settings icon (أيقونة جانبية)
@@ -543,7 +627,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           Text(
                             '3almaShe.com',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               color: Colors.white70,
                               fontWeight: FontWeight.w300,
                               letterSpacing: 2,
@@ -557,11 +641,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             ),
                           ),
                           SizedBox(height: 120),
-
-                          // AnimatedLogo(
-                          //   size: 120,
-                          //   isWalking: true,
-                          // ),
                         ],
                       ),
                     ),
@@ -582,9 +661,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             left: MediaQuery.of(context).size.width * 0.10,
                             child: _buildCenterMenuButton(
                               icon: 'assets/images/main_menu/store_icon.png',
-                              text: 'المتجر',
+                              text: Languages.store, // ✅ استخدام الترجمة
                               onPressed: () {
-                                // Add store navigation here
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => StoreScreen(),
+                                  ),
+                                );
                               },
                             ),
                           ),
@@ -595,7 +679,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             left: MediaQuery.of(context).size.width * 0.5 - (mainButtonSize / 2),
                             child: _buildCenterMainButton(
                               icon: 'assets/images/main_menu/play_icon.png',
-                              text: 'بدأ اللعبة',
+                              text: Languages.play, // ✅ استخدام الترجمة
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -613,7 +697,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             right: MediaQuery.of(context).size.width * 0.10,
                             child: _buildCenterMenuButton(
                               icon: 'assets/images/main_menu/levels_icon.png',
-                              text: 'المراحل',
+                              text: Languages.levels, // ✅ استخدام الترجمة
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -933,22 +1017,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     );
   }
 
-  void _openLikeLink(BuildContext context) {
-    // Implement opening like link
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('دعم اللعبة'),
-        content: Text('سيتم تفعيل خاصية التقييم قريباً'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('حسناً'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _openLikeLink(BuildContext context) {
+  //   // Implement opening like link
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: Text('دعم اللعبة'),
+  //       content: Text('سيتم تفعيل خاصية التقييم قريباً'),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: Text('حسناً'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
 
 // كلاس للأيقونات الجانبية (الزوايا) - ظل دائري

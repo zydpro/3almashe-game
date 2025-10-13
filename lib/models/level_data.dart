@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/game_data_service.dart';
+import '../Languages/localization.dart';
 
 class LevelData {
   final int levelNumber;
-  final String name;
-  final String description;
+  final String nameKey;
+  final String descriptionKey;
   final int targetScore;
   final double obstacleSpeed;
   final int obstacleFrequency;
@@ -19,8 +20,8 @@ class LevelData {
 
   LevelData({
     required this.levelNumber,
-    required this.name,
-    required this.description,
+    required this.nameKey,
+    required this.descriptionKey,
     required this.targetScore,
     required this.obstacleSpeed,
     required this.obstacleFrequency,
@@ -34,38 +35,77 @@ class LevelData {
     this.isFinalBoss = false,
   });
 
+  // دالة للحصول على اسم المرحلة بناءً على المفتاح
+  String getName(AppLocalizations l10n) {
+    switch (nameKey) {
+      case 'levelName1': return l10n.levelName1;
+      case 'levelName2': return l10n.levelName2;
+      case 'levelName3': return l10n.levelName3;
+      case 'levelName4': return l10n.levelName4;
+      case 'levelName5': return l10n.levelName5;
+      case 'levelName6': return l10n.levelName6;
+      case 'levelName7': return l10n.levelName7;
+      case 'levelName8': return l10n.levelName8;
+      case 'levelName9': return l10n.levelName9;
+      case 'levelName10': return l10n.levelName10;
+      case 'levelName11': return l10n.levelName11;
+      case 'levelName12': return l10n.levelName12;
+      case 'levelName13': return l10n.levelName13;
+      case 'levelName14': return l10n.levelName14;
+      case 'levelName15': return l10n.levelName15;
+      case 'levelName16': return l10n.levelName16;
+      case 'levelName17': return l10n.levelName17;
+      case 'levelName18': return l10n.levelName18;
+      case 'levelName19': return l10n.levelName19;
+      case 'levelName20': return l10n.levelName20;
+      default: return 'Level $levelNumber';
+    }
+  }
+
+  // دالة للحصول على وصف المرحلة بناءً على المفتاح
+  String getDescription(AppLocalizations l10n) {
+    switch (descriptionKey) {
+      case 'levelDesc1': return l10n.levelDesc1;
+      case 'levelDesc2': return l10n.levelDesc2;
+      case 'levelDesc3': return l10n.levelDesc3;
+      case 'levelDesc4': return l10n.levelDesc4;
+      case 'levelDesc5': return l10n.levelDesc5;
+      case 'levelDesc6': return l10n.levelDesc6;
+      case 'levelDesc7': return l10n.levelDesc7;
+      case 'levelDesc8': return l10n.levelDesc8;
+      case 'levelDesc9': return l10n.levelDesc9;
+      case 'levelDesc10': return l10n.levelDesc10;
+      case 'levelDesc11': return l10n.levelDesc11;
+      case 'levelDesc12': return l10n.levelDesc12;
+      case 'levelDesc13': return l10n.levelDesc13;
+      case 'levelDesc14': return l10n.levelDesc14;
+      case 'levelDesc15': return l10n.levelDesc15;
+      case 'levelDesc16': return l10n.levelDesc16;
+      case 'levelDesc17': return l10n.levelDesc17;
+      case 'levelDesc18': return l10n.levelDesc18;
+      case 'levelDesc19': return l10n.levelDesc19;
+      case 'levelDesc20': return l10n.levelDesc20;
+      default: return 'Complete this level to advance';
+    }
+  }
+
   static Future<List<LevelData>> getAllLevels() async {
     List<int> unlockedLevels = await GameDataService.getUnlockedLevels();
     List<LevelData> levels = [];
 
-    List<String> levelNames = [
-      'البداية', 'التحدي الأول', 'المدينة المزدحمة', 'الليل المظلم', 'العاصفة',
-      'الصحراء الحارة', 'الجبال الثلجية', 'الغابة المطيرة', 'المحيط الهائج', 'الفضاء الخارجي',
-      'المتاهة', 'القلعة القديمة', 'البركان', 'الوادي السري', 'المختبر',
-      'المدينة المستقبلية', 'الحديقة الجوراسية', 'المعبد الضائع', 'القطب الشمالي', 'الصحراء الغامضة',
+    // استخدام المفاتيح بدلاً من النصوص الثابتة
+    List<String> levelNameKeys = [
+      'levelName1', 'levelName2', 'levelName3', 'levelName4', 'levelName5',
+      'levelName6', 'levelName7', 'levelName8', 'levelName9', 'levelName10',
+      'levelName11', 'levelName12', 'levelName13', 'levelName14', 'levelName15',
+      'levelName16', 'levelName17', 'levelName18', 'levelName19', 'levelName20',
     ];
 
-    List<String> descriptions = [
-      'تعلم أساسيات اللعبة',
-      'عقبات أسرع وأكثر',
-      'تجنب الحشود',
-      'رؤية محدودة',
-      'تحدي الخبراء',
-      'حرارة عالية',
-      'ثلوج وبرودة',
-      'أمطار وغابات',
-      'أمواج عاتية',
-      'انعدام الجاذبية',
-      'طرق متشابكة',
-      'أجواء تاريخية',
-      'حمم بركانية',
-      'أسرار مخفية',
-      'تجارب علمية',
-      'تكنولوجيا متطورة',
-      'ديناصورات عملاقة',
-      'كنوز قديمة',
-      'جليد أبدي',
-      'أساطير الصحراء',
+    List<String> descriptionKeys = [
+      'levelDesc1', 'levelDesc2', 'levelDesc3', 'levelDesc4', 'levelDesc5',
+      'levelDesc6', 'levelDesc7', 'levelDesc8', 'levelDesc9', 'levelDesc10',
+      'levelDesc11', 'levelDesc12', 'levelDesc13', 'levelDesc14', 'levelDesc15',
+      'levelDesc16', 'levelDesc17', 'levelDesc18', 'levelDesc19', 'levelDesc20',
     ];
 
     List<Color> backgroundColors = [
@@ -123,8 +163,8 @@ class LevelData {
 
       levels.add(LevelData(
         levelNumber: i,
-        name: levelNames[(i - 1) % levelNames.length],
-        description: descriptions[(i - 1) % descriptions.length],
+        nameKey: levelNameKeys[(i - 1) % levelNameKeys.length],
+        descriptionKey: descriptionKeys[(i - 1) % descriptionKeys.length],
         targetScore: i * 150,
         obstacleSpeed: 0.015 + (i * 0.0015),
         obstacleFrequency: (2000 - (i * 15)).clamp(300, 2000),
@@ -200,6 +240,6 @@ class LevelData {
 
   @override
   String toString() {
-    return 'Level $levelNumber: $name';
+    return 'Level $levelNumber: $nameKey';
   }
 }

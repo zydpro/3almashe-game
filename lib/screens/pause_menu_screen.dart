@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/ads_service.dart';
 import '../services/settings_service.dart';
+import '../Languages/LanguageProvider.dart';
+import '../Languages/localization.dart'; // ✅ إضافة الاستيراد
 import 'main_menu_screen.dart';
 
 class PauseMenuScreen extends StatefulWidget {
@@ -19,19 +22,46 @@ class PauseMenuScreen extends StatefulWidget {
   State<PauseMenuScreen> createState() => _PauseMenuScreenState();
 }
 
-class _PauseMenuScreenState extends State<PauseMenuScreen> {
+class _PauseMenuScreenState extends State<PauseMenuScreen> with SingleTickerProviderStateMixin {
   late SettingsService _settingsService;
+  late AnimationController _languageAnimationController;
+  late Animation<double> _languageScaleAnimation;
+
+  // ✅ نفس إعدادات الحجم والظل من SettingsScreen
+  double cornerShadowBlur = 10.0;
+  double cornerShadowSpread = 2.0;
+  Color cornerShadowColor = Colors.black.withOpacity(0.5);
+  Offset cornerShadowOffset = const Offset(2, 2);
+  double cornerIconSize = 50.0;
+  double cornerButtonSize = 60.0;
 
   @override
   void initState() {
     super.initState();
     _settingsService = SettingsService();
     _settingsService.addListener(_onSettingsChanged);
+    _initLanguageAnimation();
+  }
+
+  void _initLanguageAnimation() {
+    _languageAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _languageScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.7), weight: 0.5),
+      TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 0.5),
+    ]).animate(CurvedAnimation(
+      parent: _languageAnimationController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void dispose() {
     _settingsService.removeListener(_onSettingsChanged);
+    _languageAnimationController.dispose();
     super.dispose();
   }
 
@@ -50,7 +80,7 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
   }
 
   void _showAdAndRestart() {
-    print('🔄 بدء عملية إعادة التشغيل مع الإعلان');
+    final l10n = AppLocalizations.of(context); // ✅ استخدام الترجمة
 
     showDialog(
       context: context,
@@ -58,23 +88,23 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
-          title: const Text(
-            'جاري عرض الإعلان',
+          title: Text(
+            l10n.loadingAd, // ✅ 'جاري تحميل الإعلان...'
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 20),
-              const Text(
-                'يرجى الانتظار...',
-                style: TextStyle(color: Colors.white70),
+              Text(
+                l10n.loading, // ✅ 'جاري التحميل...'
+                style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 10),
               Text(
-                'بعد انتهاء الإعلان ستبدأ المرحلة من جديد',
+                l10n.pauseAdRestart, // ✅ 'بعد انتهاء الإعلان ستبدأ المرحلة من جديد'
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.orange,
@@ -89,23 +119,20 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
     AdsService.showInterstitialAd(
       onAdStarted: () {
-        print('▶️ إعلان إعادة التشغيل بدأ');
-        Navigator.pop(context); // إغلاق dialog الانتظار
+        Navigator.pop(context);
       },
       onAdCompleted: () {
-        print('✅ إعلان إعادة التشغيل اكتمل - الانتقال للعبة');
         widget.onRestart();
       },
       onAdFailed: (error) {
-        print('❌ إعلان إعادة التشغيل فشل: $error - الاستمرار بدون إعلان');
-        Navigator.pop(context); // إغلاق dialog الانتظار
-        widget.onRestart(); // استمرار اللعبة حتى لو فشل الإعلان
+        Navigator.pop(context);
+        widget.onRestart();
       },
     );
   }
 
   void _goToMainMenu() {
-    print('🏠 المستخدم ضغط على "العودة للقائمة الرئيسية" مع إعلان');
+    final l10n = AppLocalizations.of(context); // ✅ استخدام الترجمة
 
     showDialog(
       context: context,
@@ -113,23 +140,23 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
-          title: const Text(
-            'جاري عرض الإعلان',
+          title: Text(
+            l10n.loadingAd, // ✅ 'جاري تحميل الإعلان...'
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 20),
-              const Text(
-                'يرجى الانتظار...',
-                style: TextStyle(color: Colors.white70),
+              Text(
+                l10n.loading, // ✅ 'جاري التحميل...'
+                style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 10),
               Text(
-                'بعد انتهاء الإعلان ستعود للقائمة الرئيسية',
+                l10n.pauseAdMainMenu, // ✅ 'بعد انتهاء الإعلان ستعود للقائمة الرئيسية'
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.orange,
@@ -144,11 +171,9 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
     AdsService.showInterstitialAd(
       onAdStarted: () {
-        print('▶️ إعلان العودة للقائمة الرئيسية بدأ');
-        Navigator.pop(context); // إغلاق dialog الانتظار
+        Navigator.pop(context);
       },
       onAdCompleted: () {
-        print('✅ إعلان العودة للقائمة الرئيسية اكتمل');
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MainMenuScreen()),
@@ -156,8 +181,7 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
         );
       },
       onAdFailed: (error) {
-        print('❌ إعلان العودة للقائمة الرئيسية فشل: $error');
-        Navigator.pop(context); // إغلاق dialog الانتظار
+        Navigator.pop(context);
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MainMenuScreen()),
@@ -179,8 +203,121 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
     _settingsService.toggleVibration();
   }
 
+  // ✅ دالة تبديل اللغة
+  Future<void> _toggleLanguage(LanguageProvider languageProvider) async {
+    await _languageAnimationController.forward();
+    await languageProvider.toggleLanguage();
+    await _languageAnimationController.reverse();
+  }
+
+  // ✅ زر تبديل اللغة في الهيدر - بنفس تصميم SettingsScreen تماماً
+  Widget _buildLanguageToggleButton() {
+    return GestureDetector(
+      onTap: () {
+        final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+        _toggleLanguage(languageProvider);
+      },
+      child: Container(
+        width: cornerButtonSize, // ✅ نفس الحجم 60.0
+        height: cornerButtonSize, // ✅ نفس الحجم 60.0
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.01),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.01),
+            width: 0.1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: cornerShadowColor,
+              blurRadius: cornerShadowBlur,
+              spreadRadius: cornerShadowSpread,
+              offset: cornerShadowOffset,
+            ),
+          ],
+        ),
+        child: Consumer<LanguageProvider>(
+          builder: (context, languageProvider, child) {
+            return Center(
+              child: languageProvider.isArabic
+                  ? _buildEnglishIcon()
+                  : _buildArabicIcon(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ✅ أيقونة اللغة الإنجليزية - بنفس تصميم SettingsScreen
+  Widget _buildEnglishIcon() {
+    return Image.asset(
+      'assets/images/main_menu/english_icon.png',
+      width: cornerIconSize, // ✅ نفس الحجم 50.0
+      height: cornerIconSize, // ✅ نفس الحجم 50.0
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: cornerIconSize,
+          height: cornerIconSize,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF012169), Color(0xFFC8102E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(cornerIconSize / 2),
+          ),
+          child: const Center(
+            child: Text(
+              'EN',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ أيقونة اللغة العربية - بنفس تصميم SettingsScreen
+  Widget _buildArabicIcon() {
+    return Image.asset(
+      'assets/images/main_menu/arabic_icon.png',
+      width: cornerIconSize, // ✅ نفس الحجم 50.0
+      height: cornerIconSize, // ✅ نفس الحجم 50.0
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: cornerIconSize,
+          height: cornerIconSize,
+          decoration: BoxDecoration(
+            color: const Color(0xFF006233),
+            borderRadius: BorderRadius.circular(cornerIconSize / 2),
+          ),
+          child: const Center(
+            child: Text(
+              'ع',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context); // ✅ استخدام الترجمة
+
     return Scaffold(
       backgroundColor: Colors.black54,
       body: Center(
@@ -202,28 +339,36 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'اللعبة متوقفة',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      color: Colors.orange,
-                      blurRadius: 10,
-                      offset: Offset(2, 2),
+              // ✅ إضافة زر اللغة في الهيدر
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 10), // مساحة فارغة للتوازن
+                  Text(
+                    l10n.pauseTitle, // ✅ 'اللعبة متوقفة'
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.orange,
+                          blurRadius: 10,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  // _buildLanguageToggleButton(), // ✅ زر اللغة
+                ],
               ),
 
               const SizedBox(height: 30),
 
               _buildOptionButton(
                 icon: Icons.play_arrow,
-                text: 'استئناف اللعبة',
-                description: 'استكمال المرحلة من حيث توقفت',
+                text: l10n.resume, // ✅ 'استئناف اللعبة'
+                description: l10n.pauseResumeDesc, // ✅ 'استكمال المرحلة من حيث توقفت'
                 onTap: _resumeGame,
                 color: Colors.green,
               ),
@@ -232,8 +377,8 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
               _buildOptionButton(
                 icon: Icons.refresh,
-                text: 'إعادة المرحلة',
-                description: 'شاهد إعلان ثم حاول من جديد',
+                text: l10n.restartLevel, // ✅ 'إعادة المرحلة'
+                description: l10n.pauseRestartDesc, // ✅ 'شاهد إعلان ثم حاول من جديد'
                 onTap: _restartLevel,
                 color: Colors.orange,
               ),
@@ -242,15 +387,15 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
               _buildOptionButton(
                 icon: Icons.home,
-                text: 'العودة للقائمة الرئيسية',
-                description: 'شاهد إعلان ثم ارجع للقائمة',
+                text: l10n.mainMenu, // ✅ 'العودة للقائمة الرئيسية'
+                description: l10n.pauseMainMenuDesc, // ✅ 'شاهد إعلان ثم ارجع للقائمة'
                 onTap: _goToMainMenu,
                 color: Colors.blue,
               ),
 
               const SizedBox(height: 30),
 
-              _buildSettingsSection(),
+              _buildSettingsSection(l10n),
             ],
           ),
         ),
@@ -312,7 +457,7 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
     );
   }
 
-  Widget _buildSettingsSection() {
+  Widget _buildSettingsSection(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -322,9 +467,9 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            'الإعدادات',
-            style: TextStyle(
+          Text(
+            l10n.settings, // ✅ 'الإعدادات'
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -332,17 +477,37 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
           ),
           const SizedBox(height: 15),
 
-          // ✅ إضافة زر الموسيقى
+          // ✅ إعدادات اللغة
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.music_note, color: Colors.white),
-                  SizedBox(width: 10),
+                  const Icon(Icons.language, color: Colors.white),
+                  const SizedBox(width: 10),
                   Text(
-                    'الموسيقى',
-                    style: TextStyle(color: Colors.white),
+                    l10n.pauseLanguage, // ✅ 'اللغة'
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              _buildLanguageToggleButton(),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // ✅ إعدادات الموسيقى
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.music_note, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Text(
+                    l10n.music, // ✅ 'الموسيقى'
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -356,16 +521,17 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
           const SizedBox(height: 10),
 
+          // ✅ إعدادات الأصوات
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.volume_up, color: Colors.white),
-                  SizedBox(width: 10),
+                  const Icon(Icons.volume_up, color: Colors.white),
+                  const SizedBox(width: 10),
                   Text(
-                    'الأصوات',
-                    style: TextStyle(color: Colors.white),
+                    l10n.sound, // ✅ 'الأصوات'
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -379,16 +545,17 @@ class _PauseMenuScreenState extends State<PauseMenuScreen> {
 
           const SizedBox(height: 10),
 
+          // ✅ إعدادات الاهتزاز
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.vibration, color: Colors.white),
-                  SizedBox(width: 10),
+                  const Icon(Icons.vibration, color: Colors.white),
+                  const SizedBox(width: 10),
                   Text(
-                    'الاهتزاز',
-                    style: TextStyle(color: Colors.white),
+                    l10n.vibration, // ✅ 'الاهتزاز'
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ],
               ),

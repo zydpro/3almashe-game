@@ -9,6 +9,7 @@
       <module name="android.path_provider_android" target="17" />
       <module name="android.shared_preferences_android" target="17" />
       <module name="android.unity_ads_plugin" target="17" />
+      <module name="android.url_launcher_android" target="17" />
       <module name="android.vibration" target="17" />
       <module name="android.video_player_android" target="17" />
       <module name="android.wakelock_plus" target="17" />

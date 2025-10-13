@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../Languages/localization.dart';
 import 'main_menu_screen.dart';
 
 class SplashScreens extends StatefulWidget {
@@ -12,6 +13,11 @@ class SplashScreens extends StatefulWidget {
 
 class _SplashScreensState extends State<SplashScreens>
     with SingleTickerProviderStateMixin {
+
+  // اعدادات اللغة
+  late AnimationController _languageAnimationController;
+  late Animation<double> _languageScaleAnimation;
+
   late AnimationController _controller;
   late Animation<double> _heroAnimation;
   late Animation<double> _textAnimation;
@@ -36,7 +42,7 @@ class _SplashScreensState extends State<SplashScreens>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 5), // تقليل المدة إلى 4 ثواني
+      duration: const Duration(seconds: 5), // تقليل المدة إلى 5 ثواني
       vsync: this,
     );
 
@@ -307,6 +313,8 @@ class _SplashScreensState extends State<SplashScreens>
 
   @override
   Widget build(BuildContext context) {
+    final Languages = AppLocalizations.of(context);
+
     if (_transitionToMain) {
       return const MainMenuScreen();
     }
@@ -529,7 +537,7 @@ class _SplashScreensState extends State<SplashScreens>
 
               // النص الرئيسي مع تأثيرات متطورة
               Positioned(
-                bottom: screenHeight * 0.25,
+                bottom: screenHeight * 0.22,
                 left: 0,
                 right: 0,
                 child: Opacity(
@@ -566,10 +574,29 @@ class _SplashScreensState extends State<SplashScreens>
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
 
                       Text(
-                        'بطل المعركة',
+                        '3almaShe.com',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFFAFAFA),
+                          letterSpacing: 1.2,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.6),
+                              blurRadius: 6,
+                              offset: const Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      Text(
+                        Languages.flash,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -714,15 +741,17 @@ class _SplashScreensState extends State<SplashScreens>
   }
 
   Widget _buildPowerUpIndicators() {
+    final Languages = AppLocalizations.of(context);
+
     return Wrap(
       spacing: 16,
       runSpacing: 12,
       alignment: WrapAlignment.center,
       children: [
-        _buildPowerUpIcon(Icons.bolt, const Color(0xFFFFD54F), 'سرعة'),
-        _buildPowerUpIcon(Icons.shield, const Color(0xFF4FC3F7), 'درع'),
-        _buildPowerUpIcon(Icons.favorite, const Color(0xFFEF5350), 'صحة'),
-        _buildPowerUpIcon(Icons.slow_motion_video, const Color(0xFF66BB6A), 'ابطاء'),
+        _buildPowerUpIcon(Icons.bolt, const Color(0xFFFFD54F), Languages.speed),
+        _buildPowerUpIcon(Icons.shield, const Color(0xFF4FC3F7), Languages.shield),
+        _buildPowerUpIcon(Icons.favorite, const Color(0xFFEF5350), Languages.health),
+        _buildPowerUpIcon(Icons.slow_motion_video, const Color(0xFF66BB6A), Languages.slow),
       ],
     );
   }

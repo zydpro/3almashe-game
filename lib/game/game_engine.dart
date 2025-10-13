@@ -28,8 +28,7 @@ class GameEngine {
 
   int _preBossScore = 0;
   bool _bossSpawned = false;
-
-  double get gameTime => _gameTime;
+  double _gameTime = 0.0;
 
   // === نظام الزعيم ===
   Boss? _currentBoss;
@@ -60,7 +59,6 @@ class GameEngine {
 
   // === نظام الوقت ===
   int _timeElapsed = 0;
-  double _gameTime = 0.0;
   static const int _levelDuration = 120;
 
   // === التايمرات ===
@@ -82,6 +80,10 @@ class GameEngine {
   bool _showGroundText = true;
   bool _showBossAttackHint = false;
   Timer? _bossHintTimer;
+
+  // === نظام التعليمات المؤقت ===
+  bool _showTutorialInstructions = true;
+  Timer? _tutorialInstructionsTimer;
 
   final Random _random = Random();
   final LevelData levelData;
@@ -118,6 +120,8 @@ class GameEngine {
   Boss? get currentBoss => _currentBoss;
   bool get isBossFight => _isBossFight;
   bool get isBossDefeated => _isBossDefeated;
+  bool get showTutorialInstructions => _showTutorialInstructions;
+  double get gameTime => _gameTime;
 
   GameEngine({
     required this.levelData,
@@ -136,28 +140,30 @@ class GameEngine {
       x: 0.2,
       y: 0.7,
       groundY: 0.75,
-      jumpPower: -0.025,
-      gravity: 0.001,
-      weight: 1.0,
+      jumpPower: -0.045,
+      gravity: 0.0018,
+      weight: 1.1,
     );
 
-    // ✅ ضبط حدود القفز
     _character!.setJumpBounds(0.3, 0.1);
-
     _backgroundManager.initialize();
     _initializePlatforms();
     _isInitialized = true;
 
     _startTutorialTimer();
     _startGroundTextTimer();
-    // print('🎮 تم تهيئة محرك اللعبة - المستوى ${levelData.levelNumber}');
+    _startTutorialInstructionsTimer();
   }
 
-  // ✅ تهيئة المنصات
+  void _startTutorialInstructionsTimer() {
+    _tutorialInstructionsTimer = Timer(const Duration(seconds: 6), () {
+      _showTutorialInstructions = true;
+    });
+  }
+
   void _initializePlatforms() {
     _platforms.clear();
 
-    // ✅ منصات أولية بمسافات مناسبة
     _platforms.add(Obstacle(
       x: 1.1,
       y: 0.5,
@@ -172,7 +178,7 @@ class GameEngine {
     ));
 
     _platforms.add(Obstacle(
-      x: 1.8, // ✅ زيادة المسافة
+      x: 1.8,
       y: 0.4,
       width: 0.12,
       height: 0.035,
@@ -185,7 +191,7 @@ class GameEngine {
     ));
 
     _platforms.add(Obstacle(
-      x: 2.5, // ✅ زيادة المسافة أكثر
+      x: 2.5,
       y: 0.3,
       width: 0.15,
       height: 0.03,
@@ -196,10 +202,7 @@ class GameEngine {
       isEnemy: false,
       imagePath: ImageService.platform,
     ));
-
-    // print('🎯 Initialized ${_platforms.length} platforms with proper spacing');
   }
-
 
   void ensureGameStarted() {
     if (!_isInitialized) {
@@ -217,15 +220,14 @@ class GameEngine {
   }
 
   void _startGroundTextTimer() {
-    _groundTextTimer = Timer(const Duration(seconds: 15), () {
+    _groundTextTimer = Timer(const Duration(seconds: 6), () {
       _showGroundText = false;
-      print('🌍 Ground text hidden after 15 seconds');
     });
   }
 
   void _startBossHintTimer() {
     _showBossAttackHint = true;
-    _bossHintTimer = Timer(const Duration(seconds: 10), () {
+    _bossHintTimer = Timer(const Duration(seconds: 6), () {
       _showBossAttackHint = false;
     });
   }
@@ -237,10 +239,7 @@ class GameEngine {
     _isGameRunning = true;
     _levelCompleted = false;
 
-    print('🚀 Game Started - Level ${levelData.levelNumber}');
-    // ✅ إعادة تهيئة المنصات للتأكد
     _forceReinitializePlatforms();
-
     _startGameLoop();
     _startLevelTimer();
     _startSpawners();
@@ -262,27 +261,12 @@ class GameEngine {
         return;
       }
 
-      _timeElapsed++; // ✅ الآن يزيد كل ثانية واحدة
+      _timeElapsed++;
+      _checkBossAppearance();
 
-      double completionPercentage = (_score / levelData.targetScore).clamp(0.0, 1.0);
-
-      // ✅ التحقق من ظهور الزعيم
-      if (!_isBossFight && !_bossSpawned && completionPercentage >= 0.8) {
-        _startBossFight();
-        _bossSpawned = true;
-      }
-
-      // ✅ الإصلاح: تحقق من انتهاء الوقت فقط إذا لم تكن في معركة زعيم
       if (!_isBossFight && _timeElapsed >= _levelDuration) {
-        print('⏰ الوقت انتهى! إكمال المستوى...');
         _completeLevel();
         timer.cancel();
-      }
-
-      // ✅ طباعة تشخيصية كل 10 ثواني
-      if (_timeElapsed % 10 == 0) {
-        print('⏱️ الوقت المتبقي: ${_levelDuration - _timeElapsed} ثانية | '
-            'النقاط: $_score/${levelData.targetScore}');
       }
     });
   }
@@ -291,83 +275,68 @@ class GameEngine {
     if (_isBossFight || _bossSpawned) return;
 
     double completionPercentage = (_score / levelData.targetScore).clamp(0.0, 1.0);
-
-    // ✅ الإصلاح: تأكد من مرور وقت كافٍ قبل ظهور الزعيم
-    bool hasEnoughTimePassed = _gameTime > 30.0; // 30 ثانية على الأقل
+    bool hasEnoughTimePassed = _gameTime > 30.0;
 
     if (completionPercentage >= 0.8 && hasEnoughTimePassed) {
       _startBossFight();
       _bossSpawned = true;
-
-      // print('🎯 الزعيم ظهر! النسبة: ${(completionPercentage * 100).toStringAsFixed(1)}%');
-      // print('🎯 الوقت المنقضي: ${_gameTime.toStringAsFixed(1)} ثانية');
     }
   }
 
   void _startSpawners() {
     _obstacleSpawnTimer = Timer.periodic(
-      const Duration(milliseconds: 800), // ✅ كل 1.2 ثانية
+      const Duration(milliseconds: 800),
           (timer) {
-        // print('⏰ Obstacle spawn timer triggered');
         _spawnObstacle();
       },
     );
 
     _enemySpawnTimer = Timer.periodic(
-      const Duration(milliseconds: 2500), // ✅ كل 2 ثواني
+      const Duration(milliseconds: 2500),
           (timer) {
-        // print('⏰ Enemy spawn timer triggered');
         _spawnEnemy();
       },
     );
 
     _powerUpSpawnTimer = Timer.periodic(
-      const Duration(seconds: 20), // ✅ كل 15 ثواني
+      const Duration(seconds: 20),
           (timer) {
-        // print('⏰ PowerUp spawn timer triggered');
         _spawnPowerUp();
       },
     );
 
-    // ✅ إضافة platformSpawnTimer المفقود
     _platformSpawnTimer = Timer.periodic(
-      const Duration(seconds: 20), // ✅ كل 15 ثواني
+      const Duration(seconds: 20),
           (timer) {
-        // print('⏰ Platform spawn timer triggered');
         _spawnPlatform();
       },
     );
   }
 
-// ✅ زيادة فرصة ظهور المنصات
   void _spawnPlatform() {
     if (!_isGameRunning || _levelCompleted || _character == null) return;
 
-    // ✅ زيادة فرصة الظهور بناءً على عدد المنصات الحالية
     double spawnChance = 0.0;
 
     if (_platforms.length < 3) {
-      spawnChance = 0.8; // ✅ فرصة عالية إذا كان هناك القليل من المنصات
+      spawnChance = 0.8;
     } else if (_platforms.length < 6) {
-      spawnChance = 0.4; // ✅ فرصة متوسطة
+      spawnChance = 0.4;
     } else if (_platforms.length < 10) {
-      spawnChance = 0.2; // ✅ فرصة منخفضة
+      spawnChance = 0.2;
     }
 
-    // ✅ زيادة الفرصة مع المستوى
     if (_level >= 5) spawnChance += 0.1;
     if (_level >= 10) spawnChance += 0.1;
 
     if (_random.nextDouble() < spawnChance) {
       final platform = _createRandomPlatform();
 
-      // ✅ التحقق من عدم تداخل المنصات مع بعضها
       bool isPositionValid = true;
       for (var existingPlatform in _platforms) {
         final distanceX = (platform.x - existingPlatform.x).abs();
         final distanceY = (platform.y - existingPlatform.y).abs();
 
-        // ✅ مسافات أفقية وعمودية آمنة
         if (distanceX < 0.4 && distanceY < 0.15) {
           isPositionValid = false;
           break;
@@ -376,31 +345,25 @@ class GameEngine {
 
       if (isPositionValid) {
         _platforms.add(platform);
-        // print('🧱 Spawned platform - '
-        //     'Total: ${_platforms.length}, '
-        //     'X: ${platform.x.toStringAsFixed(2)}, '
-        //     'Y: ${platform.y.toStringAsFixed(2)}');
       }
     }
   }
 
   Obstacle _createRandomPlatform() {
-    // ✅ دالة مساعدة للحصول على ارتفاعات متنوعة - جميعها أعلى من الأرض
     double getRandomPlatformHeight() {
       final heightTier = _random.nextDouble();
 
       if (heightTier < 0.25) {
-        return 0.25 + _random.nextDouble() * 0.1; // ✅ عالية جداً: 0.25 - 0.35
+        return 0.25 + _random.nextDouble() * 0.1;
       } else if (heightTier < 0.5) {
-        return 0.35 + _random.nextDouble() * 0.1; // ✅ عالية: 0.35 - 0.45
+        return 0.35 + _random.nextDouble() * 0.1;
       } else if (heightTier < 0.75) {
-        return 0.45 + _random.nextDouble() * 0.1; // ✅ متوسطة: 0.45 - 0.55
+        return 0.45 + _random.nextDouble() * 0.1;
       } else {
-        return 0.55 + _random.nextDouble() * 0.1; // ✅ منخفضة: 0.55 - 0.65
+        return 0.55 + _random.nextDouble() * 0.1;
       }
     }
 
-    // ✅ أنواع المنصات المتنوعة مع ارتفاعات عشوائية
     final types = [
       {
         'width': 0.18,
@@ -423,85 +386,32 @@ class GameEngine {
         'speed': 0.03,
         'type': 'long_platform'
       },
-      {
-        'width': 0.2,
-        'height': 0.04,
-        'y': getRandomPlatformHeight(),
-        'speed': 0.025,
-        'type': 'wide_platform'
-      },
-      {
-        'width': 0.16,
-        'height': 0.032,
-        'y': getRandomPlatformHeight(),
-        'speed': 0.06,
-        'type': 'fast_platform'
-      },
-      // ✅ منصات خاصة للمستويات المتقدمة - أعلى
-      {
-        'width': 0.14,
-        'height': 0.025,
-        'y': 0.2 + _random.nextDouble() * 0.15, // ✅ عالية جداً: 0.2 - 0.35
-        'speed': 0.035,
-        'type': 'high_platform'
-      },
-      {
-        'width': 0.22,
-        'height': 0.045,
-        'y': getRandomPlatformHeight(),
-        'speed': 0.015,
-        'type': 'mega_platform'
-      },
-      {
-        'width': 0.1,
-        'height': 0.028,
-        'y': getRandomPlatformHeight(),
-        'speed': 0.07,
-        'type': 'small_fast_platform'
-      },
-      // ❌ إزالة المنصات الأرضية
-      // {
-      //   'width': 0.25,
-      //   'height': 0.05,
-      //   'y': 0.68 + _random.nextDouble() * 0.07, // ❌ منصات أرضية - محذوف
-      //   'speed': 0.02,
-      //   'type': 'ground_platform'
-      // }
     ];
 
     final type = types[_random.nextInt(types.length)];
     final baseSpeed = type['speed'] as double;
 
-    // ✅ تحديد اتجاه الحركة بشكل عشوائي
     double finalSpeed;
     if (_random.nextDouble() < 0.7) {
-      // ✅ 70% تتحرك لليسار (سرعة موجبة)
       finalSpeed = baseSpeed;
     } else {
-      // ✅ 30% تتحرك لليمين (سرعة سالبة) - أبطأ قليلاً
       finalSpeed = -baseSpeed * 0.8;
     }
 
-    // ✅ منصات ثابتة في بعض الأحيان (10%)
     if (_random.nextDouble() < 0.1) {
       finalSpeed = 0.0;
     }
 
-    // ✅ إضافة تغييرات سرعة إضافية بناءً على المستوى
     if (_level >= 5) {
-      finalSpeed *= (1.0 + (_level * 0.02)); // ✅ زيادة السرعة مع المستوى
+      finalSpeed *= (1.0 + (_level * 0.02));
     }
 
-    // ✅ تحديد موقع البداية بناءً على اتجاه الحركة
     double startX;
     if (finalSpeed > 0) {
-      // ✅ تتحرك لليسار - تبدأ من اليمين
       startX = 1.1 + _random.nextDouble() * 0.3;
     } else if (finalSpeed < 0) {
-      // ✅ تتحرك لليمين - تبدأ من اليسار
       startX = -0.2 - _random.nextDouble() * 0.3;
     } else {
-      // ✅ ثابتة - تبدأ من مواقع متنوعة
       startX = 0.3 + _random.nextDouble() * 0.7;
     }
 
@@ -519,94 +429,29 @@ class GameEngine {
     );
   }
 
-// ✅ دالة مساعدة لألوان المنصات المختلفة
   Color _getPlatformColor(String platformType) {
     switch (platformType) {
       case 'high_platform':
-        return Colors.brown.shade300; // ✅ فاتح للمنصات العالية
+        return Colors.brown.shade300;
       case 'mega_platform':
-        return Colors.brown.shade600; // ✅ داكن للمنصات الكبيرة
+        return Colors.brown.shade600;
       case 'small_fast_platform':
-        return Colors.orange.shade400; // ✅ برتقالي للمنصات السريعة
+        return Colors.orange.shade400;
       case 'ground_platform':
-        return Colors.brown.shade800; // ✅ بني داكن للمنصات الأرضية
+        return Colors.brown.shade800;
       default:
-        return Colors.brown.shade400; // ✅ اللون الأساسي
-    }
-  }
-
-  // ✅ دالة لتصنيف ارتفاع المنصة
-  String _getPlatformHeightCategory(double y) {
-    if (y < 0.3) return "VERY HIGH";
-    if (y < 0.4) return "HIGH";
-    if (y < 0.5) return "MEDIUM-HIGH";
-    if (y < 0.6) return "MEDIUM";
-    return "LOW";
-  }
-
-// ✅ دالة لوصف حركة المنصة
-  String _getPlatformMovementDescription(double speed) {
-    if (speed == 0) return "🛑 STATIC";
-    if (speed > 0.05) return "🚀 FAST LEFT";
-    if (speed > 0) return "⬅️ LEFT";
-    if (speed > -0.04) return "➡️ RIGHT";
-    return "💨 FAST RIGHT";
-  }
-
-  // // ✅ إضافة دالة لفحص حالة المنصات
-  // void _debugPlatforms() {
-  //   if (_platforms.isNotEmpty) {
-  //     print('🔍 PLATFORM DEBUG - Total: ${_platforms.length}');
-  //     for (int i = 0; i < _platforms.length; i++) {
-  //       final platform = _platforms[i];
-  //       print('   Platform $i: X=${platform.x.toStringAsFixed(3)}, '
-  //           'Y=${platform.y.toStringAsFixed(3)}, '
-  //           'Speed=${platform.speed}, '
-  //           'Width=${platform.width}, '
-  //           'Height=${platform.height}');
-  //     }
-  //   } else {
-  //     print('🔍 PLATFORM DEBUG: No platforms found');
-  //   }
-  // }
-
-  // فحص حركة المنصة
-  void _debugPlatformMovement() {
-    if (_platforms.isNotEmpty && _gameTime % 1 < 0.016) {
-      final platform = _platforms.first;
-      print('🔍 PLATFORM MOVEMENT DEBUG:');
-      print('   - Game Time: ${_gameTime.toStringAsFixed(2)}s');
-      print('   - Platform X: ${platform.x.toStringAsFixed(3)}');
-      print('   - Platform Speed: ${platform.speed}');
-      print('   - Platform Count: ${_platforms.length}');
-      print('   - Game Running: $_isGameRunning');
-      print('   - Update Called: ✅');
+        return Colors.brown.shade400;
     }
   }
 
   void _forceReinitializePlatforms() {
-    print('🔄 FORCE REINITIALIZING PLATFORMS');
     _platforms.clear();
     _initializePlatforms();
-
-    // تحقق من المنصات الجديدة
-    for (int i = 0; i < _platforms.length; i++) {
-      final platform = _platforms[i];
-      print('   New Platform $i: X=${platform.x.toStringAsFixed(3)}, '
-          'Speed=${platform.speed}, '
-          'Moving: ${platform.speed > 0}');
-    }
   }
 
-// ✅ جعلها public للوصول من GameScreen
   void forceReinitializePlatforms() {
     _forceReinitializePlatforms();
   }
-
-// ✅ جعلها public للوصول من GameScreen
-//   void debugPlatforms() {
-//     _debugPlatforms();
-//   }
 
   // === معركة الزعيم ===
   void _startBossFight() {
@@ -618,13 +463,10 @@ class GameEngine {
     _preBossScore = _score;
     _currentBoss = _createBossForLevel(levelData.levelNumber);
 
-    // ✅ إيقاف توليد المنصات فقط أثناء معركة الزعيم
     _platformSpawnTimer?.cancel();
-
     _startBossHintTimer();
 
     AudioService().playBossMusic();
-    print('👹 Boss fight started! Level ${levelData.levelNumber}');
     onBossAppear?.call();
   }
 
@@ -642,7 +484,6 @@ class GameEngine {
       baseHealth = 5000;
       attackSpeed = 0.5;
     } else if (isRare) {
-      final rareIndex = _getRareBossIndex(level);
       imagePath = _getBossImagePath(level, true);
       baseHealth = (baseHealth * 1.5).toInt();
     } else {
@@ -663,7 +504,6 @@ class GameEngine {
     );
   }
 
-  // ✅ دالة مساعدة للحصول على صورة الزعيم
   String _getBossImagePath(int level, bool isRare) {
     final bossIndex = (level ~/ 10) % 5;
     if (isRare) {
@@ -694,26 +534,12 @@ class GameEngine {
         level == 98 || level == 99;
   }
 
-  int _getRareBossIndex(int level) {
-    final rareLevels = [15, 25, 50, 75, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99];
-    return rareLevels.indexOf(level) % 5;
-  }
-
   // === تحديث اللعبة ===
   void _updateGame() {
     if (!_isGameRunning || _character == null) return;
 
     _gameTime += 0.016;
 
-    // ✅ طباعة تشخيصية كل 5 ثواني
-    if (_gameTime % 5 < 0.016 && !_isBossFight) {
-      double completion = (_score / levelData.targetScore).clamp(0.0, 1.0);
-      print('📊 [تشخيص] النسبة: ${(completion * 100).toStringAsFixed(1)}% | '
-          'الوقت: ${_gameTime.toStringAsFixed(1)}s | '
-          'النقاط: $_score/${levelData.targetScore}');
-    }
-
-    // ✅ الإصلاح: تحقق من نهاية اللعبة هنا
     if (_character!.isDead || _isBossDefeated) {
       if (_character!.isDead) {
         _gameOver();
@@ -723,13 +549,7 @@ class GameEngine {
       return;
     }
 
-    // ✅ تحديث وقت EnemyManager للحركات التموجية
     _enemyManager.updateGameTime(0.016);
-
-    if (!_isBossFight && !_bossSpawned) {
-      _checkBossAppearance();
-    }
-
     _updateCharacter();
     _backgroundManager.update();
     _bumpManager.update();
@@ -738,14 +558,8 @@ class GameEngine {
     _updateObstacles();
     _updateEnemies();
     _updatePowerUps();
-    _debugPlatformMovement();
 
-    // ✅ إضافة هذا السطر: التحقق من القفز على الـ brick
     _checkBrickJumping();
-
-    if (_gameTime % 5 < 0.016 && _enemies.isNotEmpty) {
-      _debugEnemies();
-    }
 
     if (_isBossFight) {
       _updateBoss();
@@ -755,204 +569,68 @@ class GameEngine {
     _checkLevelCompletion();
   }
 
-  // ✅ دالة لفحص الأعداء
-  void _debugEnemies() {
-    if (_enemies.isEmpty) {
-      print('🔍 No enemies to debug');
-      return;
-    }
-
-    print('🔍 Enemy Debug - Total: ${_enemies.length}');
-    int flyingCount = 0;
-    int groundCount = 0;
-
-    for (var enemy in _enemies) {
-      final name = _enemyManager.getEnemyName(enemy);
-      final isFlying = enemy.type == ObstacleType.flyingEnemy;
-
-      if (isFlying) flyingCount++;
-      else groundCount++;
-
-      print('   - $name: '
-          'X=${enemy.x.toStringAsFixed(2)}, '
-          'Y=${enemy.y.toStringAsFixed(2)}, '
-          'Health: ${enemy.health}');
-    }
-
-    print('   📊 Summary: $flyingCount flying, $groundCount ground');
-  }
-
   void _updateCharacter() {
     _character!.update();
     _checkPlatformCollisions();
     _enforceScreenBounds();
-
-    // ✅ إضافة التشخيص هنا
-    _debugCharacterState();
   }
 
-  // ✅ دالة تشخيصية لحالة الشخصية
-  // ✅ دالة تشخيصية محسنة
-  void _debugCharacterState() {
-    // طباعة كل 5 ثواني فقط لتجنب spam
-    if (_gameTime % 5 < 0.016) {
-      final character = _character!;
-
-      // ✅ تشخيص القفز - باستخدام الـ getters العامة
-      if (character.isJumping) {
-        print('🦘 حالة القفز - '
-            'الارتفاع: ${character.y.toStringAsFixed(3)}, '
-            'السرعة: ${character.velocityY.toStringAsFixed(4)}, '
-            'الحد الأقصى: ${character.currentMaxJumpHeight.toStringAsFixed(3)}');
-      }
-
-      // ✅ تشخيص المنصات - باستخدام الـ getters العامة
-      if (character.isOnPlatform) {
-        print('🧱 على منصة - '
-            'Y: ${character.y.toStringAsFixed(3)}, '
-            'منصة Y: ${character.platformY?.toStringAsFixed(3)}');
-      }
-
-      // ✅ تشخيص الحركة - باستخدام الـ getters العامة
-      if (character.isMovingLeft || character.isMovingRight) {
-        final direction = character.isMovingLeft ? 'يسار' : 'يمين';
-        print('🏃 يتحرك $direction - '
-            'السرعة: ${character.moveSpeed.toStringAsFixed(4)}');
-      }
-
-      // ✅ تشخيص الحدود
-      if (character.x <= 0.06 || character.x >= 0.94) {
-        print('🚫 قريب من الحدود الأفقية - X: ${character.x.toStringAsFixed(3)}');
-      }
-      if (character.y <= 0.11 || character.y >= 0.84) {
-        print('🚫 قريب من الحدود الرأسية - Y: ${character.y.toStringAsFixed(3)}');
-      }
-
-      // ✅ طباعة ملخص كل 15 ثانية
-      if (_gameTime % 15 < 0.016) {
-        print('📊 ملخص الشخصية - '
-            'الصحة: ${character.health}, '
-            'الأرواح: ${character.lives}, '
-            'الدرع: ${character.hasShield}, '
-            'المنيع: ${character.isInvincible}');
-      }
-    }
-  }
-
-  // ✅ دالة لفحص حالة الشخصية يمكن استدعاؤها من الخارج
-  void debugCharacter() {
-    if (_character != null) {
-      print('🔍 فحص مفصل للشخصية:');
-      print('   - الموقع: (${_character!.x.toStringAsFixed(3)}, ${_character!.y.toStringAsFixed(3)})');
-      print('   - القفز: ${_character!.isJumping}');
-      print('   - على منصة: ${_character!.isOnPlatform}');
-      print('   - ارتفاع المنصة: ${_character!.platformY?.toStringAsFixed(3)}');
-      print('   - السرعة الرأسية: ${_character!.velocityY.toStringAsFixed(4)}');
-      print('   - الحد الأقصى للقفزة: ${_character!.currentMaxJumpHeight.toStringAsFixed(3)}');
-      print('   - الصحة: ${_character!.health}');
-      print('   - الأرواح: ${_character!.lives}');
-    }
-  }
-
-  // ✅ دالة لفرض حدود الشاشة
   void _enforceScreenBounds() {
     if (_character == null) return;
 
-    // ✅ حدود أفقية
     _character!.x = _character!.x.clamp(0.05, 0.95);
 
-    // ✅ حدود رأسية
     final double minY = 0.1;
     final double maxY = 0.85;
 
     if (_character!.y < minY) {
       _character!.y = minY;
       _character!.velocityY = 0.0;
-      print('🚫 وصل للحد العلوي: ${_character!.y.toStringAsFixed(3)}');
     }
 
     if (_character!.y > maxY) {
       _character!.y = maxY;
       _character!.velocityY = 0.0;
-      print('🚫 وصل للحد السفلي: ${_character!.y.toStringAsFixed(3)}');
     }
   }
 
-  // ✅ تحديث المنصات
   void _updatePlatforms() {
     final platformsToRemove = <Obstacle>[];
 
     for (var platform in _platforms) {
-      platform.move(); // ✅ الحركة تعمل
+      platform.move();
 
-      // ✅ تحسين شرط الخروج - إزالة أكثر مرونة
       bool shouldRemove = false;
 
       if (platform.speed > 0) {
-        // ✅ تتحرك لليسار - تختفي عندما تخرج تماماً من الشاشة
         shouldRemove = platform.x < -platform.width;
       } else if (platform.speed < 0) {
-        // ✅ تتحرك لليمين - تختفي عندما تخرج تماماً من الشاشة
         shouldRemove = platform.x > 1.0 + platform.width;
       } else {
-        // ✅ ثابتة - تبقى لفترة أطول
         shouldRemove = platform.x < -0.5;
       }
 
       if (shouldRemove) {
         platformsToRemove.add(platform);
-        // print('🗑️ Platform removed - X: ${platform.x.toStringAsFixed(2)}');
       }
     }
 
     _removePlatforms(platformsToRemove);
 
-    // ✅ إضافة منصات جديدة بدلاً من الاستبدال فقط عند الإزالة
     if (platformsToRemove.isNotEmpty) {
-      // print('🔄 Replacing ${platformsToRemove.length} platforms');
       _addNewPlatforms(platformsToRemove.length);
     }
   }
 
-// ✅ دالة جديدة لإضافة منصات بدلاً من الاستبدال
   void _addNewPlatforms(int count) {
     for (int i = 0; i < count; i++) {
-      if (_platforms.length < 10) { // ✅ زيادة الحد الأقصى
+      if (_platforms.length < 10) {
         final newPlatform = _createRandomPlatform();
         _platforms.add(newPlatform);
-
-        // print('🧱 Added new platform - '
-        //     'X: ${newPlatform.x.toStringAsFixed(2)}, '
-        //     'Y: ${newPlatform.y.toStringAsFixed(2)}');
       }
     }
   }
 
-// ✅ توليد منصات بديلة - مدمجة
-  void _spawnReplacementPlatforms(int count) {
-    // print('🔄 SPAWNING $count NEW FAST PLATFORMS');
-
-    for (int i = 0; i < count; i++) {
-      if (_platforms.length < 8) {
-        final newPlatform = _createRandomPlatform();
-        _platforms.add(newPlatform);
-
-        // ✅ تحديد نوع الحركة بناءً على السرعة
-        String movementType = newPlatform.speed > 0 ? "FAST ← LEFT" : "SLOW → RIGHT";
-        String emoji = newPlatform.speed > 0 ? "🚀" : "🐢";
-
-        // print('$emoji Platform ${i + 1}: '
-        //     'X=${newPlatform.x.toStringAsFixed(3)}, '
-        //     'Y=${newPlatform.y.toStringAsFixed(3)}, '
-        //     'Speed=${newPlatform.speed}, '
-        //     'Movement=$movementType');
-      }
-    }
-
-    print('📊 Total platforms now: ${_platforms.length}');
-  }
-
-  // ✅ التحقق من الاصطدام مع المنصات - الإصلاح الرئيسي
   void _checkPlatformCollisions() {
     bool onPlatform = false;
 
@@ -992,7 +670,6 @@ class GameEngine {
     }
   }
 
-  // ✅ التحقق من اكتمال المرحلة - الإصلاح الرئيسي
   void _checkLevelCompletion() {
     if (!_levelCompleted && _isBossDefeated && _isBossFight) {
       _completeLevel();
@@ -1009,12 +686,10 @@ class GameEngine {
         _handleObstacleCollision(obstacle, obstaclesToRemove);
       }
 
-      // ✅ تحسين شرط الخروج للعقبات
       if (obstacle.isOffScreen() || obstacle.x < -0.4) {
         obstaclesToRemove.add(obstacle);
         _obstaclesAvoided++;
 
-        // ✅ الإصلاح: لا تضيف نقاط أثناء معركة الزعيم
         if (obstacle.speed > 0 && !_isBossFight) {
           _score += (10 * _comboMultiplier).toInt();
           _checkLevelUp();
@@ -1025,103 +700,18 @@ class GameEngine {
     _removeObstacles(obstaclesToRemove);
   }
 
-  void _updateEnemyMovement(Obstacle enemy) {
-    // ✅ إذا كان عدو طائر (في السماء)
-    if (enemy.y < 0.7 && enemy.imagePath == ImageService.enemyFlying) {
-      // ✅ حركة تموجية للطيران
-      final time = _gameTime * 2; // ✅ سرعة التموج
-      final wave = sin(time + enemy.x * 10) * 0.02; // ✅ حركة تموجية
-
-      enemy.y = enemy.y + wave * 0.016; // ✅ تحديث الموقع العمودي
-
-      // ✅ طباعة للت debug (يمكن إزالتها لاحقاً)
-      if (_gameTime % 5 < 0.016) {
-        print('🦅 Flying enemy - Y: ${enemy.y.toStringAsFixed(3)}, Wave: ${wave.toStringAsFixed(3)}');
-      }
-    }
-  }
-
-  // ✅ إضافة زر لفرض ظهور أعداء
-  void debugSpawnMultipleEnemies() {
-    int spawnedCount = 0;
-    for (int i = 0; i < 3; i++) {
-      if (_random.nextDouble() < 0.8) {
-        final enemy = _enemyManager.createRandomEnemy(
-            _isSlowMotion ? levelData.obstacleSpeed * 0.5 : levelData.obstacleSpeed,
-            _level
-        );
-        _enemies.add(enemy);
-        spawnedCount++;
-
-        final enemyName = _enemyManager.getEnemyName(enemy);
-        // print('👹 DEBUG: Spawned $enemyName');
-      }
-    }
-    // print('👹 DEBUG: Spawned $spawnedCount random enemies');
-  }
-
-// ✅ إضافة زر لاختبار العدو الطائر في ارتفاعات مختلفة
-  void debugSpawnFlyingEnemy() {
-    final flyingEnemy = _enemyManager.createFlyingEnemy(
-        _isSlowMotion ? levelData.obstacleSpeed * 0.5 : levelData.obstacleSpeed,
-        _level
-    );
-    _enemies.add(flyingEnemy);
-
-    // ✅ الحصول على اسم المنطقة بناءً على الارتفاع
-    String zoneName = 'غير معروف';
-    if (flyingEnemy.y < 0.45) zoneName = 'منخفض';
-    else if (flyingEnemy.y < 0.65) zoneName = 'متوسط';
-    else zoneName = 'مرتفع';
-
-    print('🦅 DEBUG: spawned flying enemy at '
-        'X: ${flyingEnemy.x.toStringAsFixed(2)}, '
-        'Y: ${flyingEnemy.y.toStringAsFixed(2)}, '
-        'المنطقة: $zoneName, '
-        'Level: $_level');
-  }
-
-  // ✅ دالة لفحص الأعداء الطائرين
-  void debugFlyingEnemies() {
-    if (_enemies.isEmpty) {
-      print('🔍 No flying enemies to debug');
-      return;
-    }
-
-    int lowFlying = 0;
-    int midFlying = 0;
-    int highFlying = 0;
-
-    for (var enemy in _enemies) {
-      if (enemy.type == ObstacleType.flyingEnemy) {
-        if (enemy.y < 0.45) lowFlying++;
-        else if (enemy.y < 0.65) midFlying++;
-        else highFlying++;
-      }
-    }
-
-    print('🦅 Flying Enemy Debug:');
-    print('   - المنخفض: $lowFlying');
-    print('   - المتوسط: $midFlying');
-    print('   - المرتفع: $highFlying');
-    print('   - الإجمالي: ${lowFlying + midFlying + highFlying}');
-  }
-
-
   void _updateEnemies() {
     final enemiesToRemove = <Obstacle>[];
 
     _enemyManager.updateEnemies(_enemies, _character!.x, _character!.y);
 
     for (var enemy in _enemies) {
-      // ✅ تحديث حركة خاصة للطائرين
       if (enemy.type == ObstacleType.flyingEnemy) {
         _updateFlyingEnemyMovement(enemy);
       }
 
       enemy.move();
 
-      // ✅ الإصلاح: التحقق من القفز على رأس العدو فقط
       if (_isCharacterJumpingOnEnemy(_character!, enemy)) {
         _defeatEnemy(enemy, enemiesToRemove);
       }
@@ -1131,9 +721,6 @@ class GameEngine {
 
       if (enemy.isOffScreen()) {
         enemiesToRemove.add(enemy);
-        final enemyName = _enemyManager.getEnemyName(enemy);
-        final enemyType = enemy.type == ObstacleType.flyingEnemy ? "FLYING" : "GROUND";
-        // print('🗑️ $enemyType enemy removed - $enemyName at X: ${enemy.x.toStringAsFixed(2)}');
       }
 
       _enemyManager.checkPackageCollisions(_character!.packages, _enemies);
@@ -1143,24 +730,14 @@ class GameEngine {
     _enemyManager.cleanupEnemies(_enemies);
   }
 
-  // ✅ دالة جديدة لتحريك العدو الطائر
   void _updateFlyingEnemyMovement(Obstacle enemy) {
     if (enemy.type == ObstacleType.flyingEnemy) {
-      // حركة تموجية إضافية للطائرين
       final wave = sin(_gameTime * 3 + enemy.x * 6) * 0.015;
       enemy.y = (enemy.y + wave).clamp(0.25, 0.6);
-
-      // ✅ زيادة السرعة قليلاً للطائرين
       enemy.speed *= 1.1;
-
-      // ✅ طباعة حركة الطائر (للـ debug)
-      if (_gameTime % 3 < 0.016) {
-        // print('🦅 Flying enemy moving - Y: ${enemy.y.toStringAsFixed(3)}, Speed: ${enemy.speed.toStringAsFixed(3)}');
-      }
     }
   }
 
-  // ✅ دالة جديدة للتحقق من القفز على رأس العدو
   bool _isCharacterJumpingOnEnemy(Character character, Obstacle enemy) {
     if (!enemy.isEnemy) return false;
 
@@ -1168,18 +745,12 @@ class GameEngine {
     final enemyTop = enemy.y - enemy.height / 2;
     final characterTop = character.y - character.height;
 
-    // ✅ تحديد منطقة رأس العدو (الجزء العلوي فقط)
     final headRegionTop = enemyTop;
-    final headRegionBottom = enemyTop + enemy.height * 0.3; // 30% العلوية فقط
+    final headRegionBottom = enemyTop + enemy.height * 0.3;
 
     final horizontalOverlap = (character.x + character.width/2) > (enemy.x - enemy.width/2) &&
         (character.x - character.width/2) < (enemy.x + enemy.width/2);
 
-    // ✅ الشروط الجديدة:
-    // 1. يجب أن يكون اللاعب فوق العدو
-    // 2. يجب أن يكون اللاعب يسقط (سرعة إيجابية)
-    // 3. يجب أن يكون الجزء السفلي من اللاعب في منطقة رأس العدو
-    // 4. يجب ألا يكون اللاعب مرتفعاً جداً فوق العدو
     final bool isAboveEnemy = characterBottom <= headRegionBottom;
     final bool isFalling = character.velocityY > 0;
     final bool isInHeadRegion = characterBottom >= headRegionTop &&
@@ -1192,35 +763,13 @@ class GameEngine {
         isInHeadRegion &&
         isNotTooHigh;
 
-    if (isJumpingOnHead) {
-      print('🎯 Jumping on enemy head - '
-          'Character Bottom: ${characterBottom.toStringAsFixed(3)}, '
-          'Enemy Top: ${enemyTop.toStringAsFixed(3)}, '
-          'Head Region: ${headRegionTop.toStringAsFixed(3)}-${headRegionBottom.toStringAsFixed(3)}, '
-          'Velocity Y: ${character.velocityY.toStringAsFixed(4)}');
-    }
-
     return isJumpingOnHead;
   }
 
-  // ✅ دالة خاصة لتحريك العدو الطائر
-  void _updateFlyingEnemy(Obstacle enemy) {
-    // حركة تموجية إضافية
-    final wave = sin(_gameTime * 4 + enemy.x * 8) * 0.01;
-    enemy.y = (enemy.y + wave).clamp(0.3, 0.75);
-
-    // ✅ طباعة حركة الطائر (للـ debug)
-    if (_gameTime % 2 < 0.016) {
-      print('🦅 Flying enemy moving - Y: ${enemy.y.toStringAsFixed(3)}');
-    }
-  }
-
-  // ✅ التحقق من القفز على عقبات الـ brick
   void _checkBrickJumping() {
     if (_character == null || !_character!.isJumping) return;
 
     for (var obstacle in _obstacles) {
-      // ✅ التحقق إذا كانت العقبة من نوع brick
       if (_isBrickObstacle(obstacle) && _isCharacterJumpingOnBrick(_character!, obstacle)) {
         _handleBrickJump(obstacle);
         break;
@@ -1228,16 +777,13 @@ class GameEngine {
     }
   }
 
-// ✅ التحقق إذا كانت العقبة من نوع brick
   bool _isBrickObstacle(Obstacle obstacle) {
-    // ✅ يمكن التعرف على الـ brick باللون أو النوع أو الصورة
     return obstacle.color == Colors.brown ||
         obstacle.color == Colors.orange ||
         obstacle.imagePath == ImageService.brick ||
-        obstacle.type == ObstacleType.groundLong; // أو أي معيار آخر
+        obstacle.type == ObstacleType.groundLong;
   }
 
-// ✅ التحقق إذا كانت الشخصية تقفز على الـ brick
   bool _isCharacterJumpingOnBrick(Character character, Obstacle brick) {
     final characterBottom = character.y;
     final brickTop = brick.y - brick.height / 2;
@@ -1255,26 +801,14 @@ class GameEngine {
         verticalProximity &&
         isFalling;
 
-    if (isJumpingOnBrick) {
-      print('🧱 Jumping on BRICK - '
-          'Character Bottom: ${characterBottom.toStringAsFixed(3)}, '
-          'Brick Top: ${brickTop.toStringAsFixed(3)}, '
-          'Velocity Y: ${character.velocityY.toStringAsFixed(4)}');
-    }
-
     return isJumpingOnBrick;
   }
 
-// ✅ معالجة القفز على الـ brick
   void _handleBrickJump(Obstacle brick) {
-    // ✅ إيقاف سقوط الشخصية
     _character!.velocityY = 0.0;
     _character!.isJumping = false;
-
-    // ✅ وضع الشخصية فوق الـ brick
     _character!.y = (brick.y - brick.height / 2) - _character!.height;
 
-    // ✅ إضافة نقاط للقفز على الـ brick
     final brickPoints = 20;
     _score += (brickPoints * _comboMultiplier).toInt();
 
@@ -1282,38 +816,7 @@ class GameEngine {
     AudioService().playJumpSound();
     VibrationService.vibrateSuccess();
 
-    // ✅ إزالة الـ brick بعد القفز عليه (اختياري)
     _obstacles.remove(brick);
-
-    print('🧱 Brick jump successful! +$brickPoints points - Brick removed');
-  }
-
-  // ✅ دالة مساعدة للتعرف على الـ brick
-  bool _isBrick(Obstacle obstacle) {
-    // ✅ عدة طرق للتعرف على الـ brick
-    return obstacle.color == Colors.brown ||
-        obstacle.imagePath == ImageService.brick ||
-        obstacle.type == ObstacleType.groundLong && obstacle.width >= 0.12;
-  }
-
-  // ✅ إنشاء جسيمات خاصة للـ brick
-  void _createBrickBreakParticles(double x, double y) {
-    final particles = <GameParticle>[];
-
-    for (int i = 0; i < 8; i++) {
-      particles.add(GameParticle(
-        x: x,
-        y: y,
-        vx: (_random.nextDouble() - 0.5) * 0.04,
-        vy: -_random.nextDouble() * 0.06 - 0.02,
-        life: 0.8 + _random.nextDouble() * 0.4,
-        maxLife: 1.2,
-        color: Colors.brown,
-        size: 2.0 + _random.nextDouble() * 3.0,
-      ));
-    }
-
-    _particles.addAll(particles);
   }
 
   void _updateBoss() {
@@ -1362,7 +865,7 @@ class GameEngine {
   }
 
   void _defeatBoss() {
-    if (_isBossDefeated) return; // ✅ منع التكرار
+    if (_isBossDefeated) return;
 
     _isBossDefeated = true;
     _isBossFight = false;
@@ -1373,11 +876,7 @@ class GameEngine {
     _createVictoryParticles();
     AudioService().playBossDefeatSound();
 
-    print('🎉 Boss defeated! +$bossScore points - Total: $_score');
-
-    // ✅ الإصلاح: استدعاء مباشر لإكمال المرحلة
     _completeLevel();
-
     onBossDefeated?.call();
   }
 
@@ -1385,7 +884,6 @@ class GameEngine {
     enemiesToRemove.add(enemy);
     _enemiesDefeated++;
 
-    // ✅ الإصلاح: إضافة النقاط فقط عند هزيمة العدو بالقفز على رأسه
     final points = _enemyManager.getEnemyPoints(enemy) * _comboMultiplier.toInt();
     _score += points;
 
@@ -1393,8 +891,6 @@ class GameEngine {
     _createEnemyDefeatParticles(enemy.x, enemy.y);
     AudioService().playEnemyDieSound();
     VibrationService.vibrateSuccess();
-
-    print('💀 ${_enemyManager.getEnemyName(enemy)} defeated! +$points points');
   }
 
   void _handleEnemyCollision(Obstacle enemy) {
@@ -1414,7 +910,7 @@ class GameEngine {
     final powerUpsToRemove = <PowerUp>[];
 
     for (var powerUp in _powerUps) {
-      powerUp.move(); // ✅ تأكد من تحريك الباور أب
+      powerUp.move();
 
       if (_character != null && _checkCollision(_character!, powerUp)) {
         _collectPowerUp(powerUp);
@@ -1528,32 +1024,28 @@ class GameEngine {
 
     final speed = _isSlowMotion ? levelData.obstacleSpeed * 0.5 : levelData.obstacleSpeed;
 
-    // ✅ زيادة فرصة الظهور بناءً على عدد العقبات الحالية
     double spawnChance = 0.0;
 
     if (_obstacles.length < 2) {
-      spawnChance = 0.9; // ✅ فرصة عالية إذا كان هناك القليل من العقبات
+      spawnChance = 0.9;
     } else if (_obstacles.length < 5) {
-      spawnChance = 0.7; // ✅ فرصة متوسطة
+      spawnChance = 0.7;
     } else if (_obstacles.length < 8) {
-      spawnChance = 0.4; // ✅ فرصة منخفضة
+      spawnChance = 0.4;
     }
 
     if (_random.nextDouble() < spawnChance) {
-      // ✅ التحقق من المسافة بين العقبات
       if (_obstacles.isNotEmpty) {
         final lastObstacle = _obstacles.last;
         final distanceFromLast = 1.1 - lastObstacle.x;
 
-        // ✅ انتظر حتى تبتعد العقبة السابقة مسافة كافية
-        if (distanceFromLast < 0.4) { // ✅ زيادة المسافة إلى 40%
+        if (distanceFromLast < 0.4) {
           return;
         }
       }
 
       final obstacle = _createRandomObstacle(speed);
       _obstacles.add(obstacle);
-      // print('🚧 Spawned obstacle - Total: ${_obstacles.length}');
     }
 
     if (_random.nextDouble() < 0.4) {
@@ -1565,94 +1057,78 @@ class GameEngine {
     final obstacleType = _random.nextDouble();
     double yPosition, width, height;
     ObstacleType type;
-    String? imagePath; // ✅ إضافة imagePath
+    String? imagePath;
 
-    // ✅ دالة مساعدة للحصول على ارتفاع عشوائي مع تجنب المنصات
     double getRandomSkyHeight() {
       final heightTier = _random.nextDouble();
 
       if (heightTier < 0.25) {
-        return 0.25 + _random.nextDouble() * 0.1; // ✅ عالي جداً: 0.25 - 0.35
+        return 0.25 + _random.nextDouble() * 0.1;
       } else if (heightTier < 0.5) {
-        return 0.35 + _random.nextDouble() * 0.1; // ✅ عالي: 0.35 - 0.45
+        return 0.35 + _random.nextDouble() * 0.1;
       } else if (heightTier < 0.75) {
-        return 0.45 + _random.nextDouble() * 0.15; // ✅ متوسط: 0.45 - 0.6
+        return 0.45 + _random.nextDouble() * 0.15;
       } else {
-        return 0.55 + _random.nextDouble() * 0.1; // ✅ منخفض: 0.55 - 0.65
+        return 0.55 + _random.nextDouble() * 0.1;
       }
     }
 
-    // ✅ تحديد نوع العقبة (Brick أو Pipe)
-    bool isBrick = _random.nextDouble() < 0.5; // ✅ 50% لكل نوع
+    bool isBrick = _random.nextDouble() < 0.5;
 
-    if (obstacleType < 0.2) { // ✅ 20% عقبات أرضية
+    if (obstacleType < 0.2) {
       yPosition = 0.75;
       if (isBrick) {
         width = 0.12;
         height = 0.12;
         type = ObstacleType.groundLong;
-        imagePath = ImageService.brick; // ✅ Brick
+        imagePath = ImageService.brick;
       } else {
         width = 0.1;
         height = 0.15;
         type = ObstacleType.groundLong;
-        imagePath = ImageService.pipe; // ✅ Pipe
+        imagePath = ImageService.pipe;
       }
-    } else if (obstacleType < 0.4) { // ✅ 20% عقبات متوسطة
+    } else if (obstacleType < 0.4) {
       yPosition = getRandomSkyHeight();
       if (isBrick) {
         width = 0.08;
         height = 0.08;
         type = ObstacleType.skyLong;
-        imagePath = ImageService.brick; // ✅ Brick
+        imagePath = ImageService.brick;
       } else {
         width = 0.07;
         height = 0.12;
         type = ObstacleType.skyLong;
-        imagePath = ImageService.pipe; // ✅ Pipe
+        imagePath = ImageService.pipe;
       }
-    } else if (obstacleType < 0.6) { // ✅ 20% عقبات صغيرة
+    } else if (obstacleType < 0.6) {
       yPosition = getRandomSkyHeight();
       if (isBrick) {
         width = 0.06;
         height = 0.06;
         type = ObstacleType.skyShort;
-        imagePath = ImageService.brick; // ✅ Brick
+        imagePath = ImageService.brick;
       } else {
         width = 0.05;
         height = 0.1;
         type = ObstacleType.skyShort;
-        imagePath = ImageService.pipe; // ✅ Pipe
+        imagePath = ImageService.pipe;
       }
-    } else if (obstacleType < 0.8) { // ✅ 20% عقبات عريضة
-      yPosition = getRandomSkyHeight();
-      if (isBrick) {
-        width = 0.15;
-        height = 0.08;
-        type = ObstacleType.skyWide;
-        imagePath = ImageService.brick; // ✅ Brick
-      } else {
-        width = 0.12;
-        height = 0.18;
-        type = ObstacleType.skyWide;
-        imagePath = ImageService.pipe; // ✅ Pipe
-      }
-    } else { // ✅ 20% عقبات خاصة
+    } else {
       yPosition = getRandomSkyHeight();
       if (isBrick) {
         width = 0.1;
         height = 0.1;
         type = ObstacleType.skyLong;
-        imagePath = ImageService.brick; // ✅ Brick
+        imagePath = ImageService.brick;
       } else {
         width = 0.08;
         height = 0.14;
         type = ObstacleType.skyLong;
-        imagePath = ImageService.pipe; // ✅ Pipe
+        imagePath = ImageService.pipe;
       }
     }
 
-    // ✅ التأكد من أن الموضع آمن (تجنب المنصات)
     bool isPositionSafe(double testY, double testHeight) {
       for (var platform in _platforms) {
         final platformTop = platform.y - platform.height / 2;
@@ -1660,25 +1136,15 @@ class GameEngine {
         final obstacleTop = testY - testHeight / 2;
         final obstacleBottom = testY + testHeight / 2;
 
-        // ✅ التحقق من التداخل الرأسي
         if ((obstacleBottom >= platformTop && obstacleTop <= platformBottom)) {
-          return false; // ❌ يوجد تداخل مع منصة
+          return false;
         }
       }
-      return true; // ✅ الموضع آمن
+      return true;
     }
 
-    // ✅ التحقق من السلامة وإعادة تعيين الارتفاع إذا لزم الأمر
     if (!isPositionSafe(yPosition, height)) {
-      yPosition = getRandomSkyHeight(); // ✅ ارتفاع بديل
-    }
-
-    // ✅ إضافة تنوع إضافي بناءً على المستوى
-    if (_level >= 10 && _random.nextDouble() < 0.2) {
-      // ✅ عقبات صعبة للمستويات المتقدمة
-      yPosition = 0.3 + _random.nextDouble() * 0.2;
-      width *= 0.8; // ✅ أصغر حجماً
-      height *= 0.8;
+      yPosition = getRandomSkyHeight();
     }
 
     return Obstacle(
@@ -1687,34 +1153,17 @@ class GameEngine {
       speed: speed,
       width: width,
       height: height,
-      color: isBrick ? Colors.brown : Colors.green, // ✅ ألوان مختلفة
-      icon: _getRandomObstacleIcon(),
+      color: isBrick ? Colors.brown : Colors.green,
       type: type,
-      imagePath: imagePath, // ✅ تعيين imagePath
+      imagePath: imagePath,
     );
-  }
-
-  // ✅ دالة مساعدة للحصول على ارتفاعات متنوعة
-  double _getRandomSkyHeight() {
-    final heightType = _random.nextDouble();
-
-    if (heightType < 0.25) {
-      return 0.25 + _random.nextDouble() * 0.1; // ✅ عالي جداً: 0.25 - 0.35
-    } else if (heightType < 0.5) {
-      return 0.35 + _random.nextDouble() * 0.1; // ✅ عالي: 0.35 - 0.45
-    } else if (heightType < 0.75) {
-      return 0.45 + _random.nextDouble() * 0.15; // ✅ متوسط: 0.45 - 0.6
-    } else {
-      return 0.55 + _random.nextDouble() * 0.1; // ✅ منخفض: 0.55 - 0.65
-    }
   }
 
   // === توليد الأعداء ===
   void _spawnEnemy() {
     if (!_isGameRunning || _levelCompleted || _character == null) return;
 
-    // ✅ زيادة فرصة ظهور الأعداء الطائرين في المستويات المتقدمة
-    double flyingEnemyChance = 0.3; // ✅ 30% فرصة أساسية للطائرين
+    double flyingEnemyChance = 0.3;
     if (_level >= 5) flyingEnemyChance = 0.5;
     if (_level >= 10) flyingEnemyChance = 0.7;
 
@@ -1723,25 +1172,21 @@ class GameEngine {
 
       Obstacle enemy;
       if (spawnFlyingEnemy) {
-        // ✅ إنشاء عدو طائر
         enemy = _enemyManager.createFlyingEnemy(
             _isSlowMotion ? levelData.obstacleSpeed * 0.5 : levelData.obstacleSpeed,
             _level
         );
 
-        // ✅ تعديل ارتفاع العدو الطائر ليكون في مواقع متنوعة
         final heightType = _random.nextDouble();
         if (heightType < 0.33) {
-          enemy.y = 0.3 + _random.nextDouble() * 0.1; // ✅ منخفض: 0.3 - 0.4
+          enemy.y = 0.3 + _random.nextDouble() * 0.1;
         } else if (heightType < 0.66) {
-          enemy.y = 0.4 + _random.nextDouble() * 0.15; // ✅ متوسط: 0.4 - 0.55
+          enemy.y = 0.4 + _random.nextDouble() * 0.15;
         } else {
-          enemy.y = 0.25 + _random.nextDouble() * 0.1; // ✅ عالي: 0.25 - 0.35
+          enemy.y = 0.25 + _random.nextDouble() * 0.1;
         }
 
-        // print('🦅 Flying enemy spawned at Y: ${enemy.y.toStringAsFixed(2)}');
       } else {
-        // ✅ إنشاء عدو أرضي
         enemy = _enemyManager.createRandomEnemy(
             _isSlowMotion ? levelData.obstacleSpeed * 0.5 : levelData.obstacleSpeed,
             _level
@@ -1756,13 +1201,12 @@ class GameEngine {
   void _spawnPowerUp() {
     if (!_isGameRunning || _levelCompleted || _character == null) return;
 
-    // ✅ زيادة فرصة الظهور إلى 60%
     if (_random.nextDouble() < 0.6) {
       final yPosition = 0.4 + _random.nextDouble() * 0.4;
       final type = PowerUpType.values[_random.nextInt(PowerUpType.values.length)];
 
       final powerUp = PowerUp(
-        x: 1.1, // ✅ تبدأ من اليمين كالمعتاد
+        x: 1.1,
         y: yPosition,
         type: type,
         width: 0.06,
@@ -1773,7 +1217,6 @@ class GameEngine {
       );
 
       _powerUps.add(powerUp);
-      // print('⭐ spawned powerup at x: ${powerUp.x.toStringAsFixed(2)}');
     }
   }
 
@@ -1855,24 +1298,75 @@ class GameEngine {
     VibrationService.vibrateSuccess();
   }
 
+  // === دوال الحركة الجديدة ===
+  void moveCharacterLeft() {
+    _character?.moveLeft();
+  }
+
+  void moveCharacterRight() {
+    _character?.moveRight();
+  }
+
+  void moveCharacterUp() {
+    _character?.moveUp();
+  }
+
+  void moveCharacterDown() {
+    _character?.moveDown();
+  }
+
+  void stopCharacterMoving() {
+    _character?.stopMoving();
+  }
+
+  // ✅✅✅ نظام السحب المحسن ✅✅✅
+  void handleCharacterDrag(double deltaX, double deltaY) {
+    if (_character == null) return;
+
+    // ✅ تحديد قوة السحب بناءً على المسافة
+    double dragSensitivity = 0.0005;
+    double horizontalForce = deltaX * dragSensitivity;
+    double verticalForce = deltaY * dragSensitivity;
+
+    // ✅ تطبيق الحركة الأفقية
+    if (horizontalForce.abs() > 0.001) {
+      _character!.x += horizontalForce;
+      _character!.x = _character!.x.clamp(0.05, 0.95);
+    }
+
+    // ✅ تطبيق الحركة العمودية (فقط إذا لم يكن على الأرض)
+    if (verticalForce.abs() > 0.001 && !_character!.isOnPlatform) {
+      _character!.y += verticalForce;
+      _character!.y = _character!.y.clamp(0.1, 0.85);
+    }
+
+    // ✅ تحديد نوع القفز بناءً على قوة السحب العمودي
+    if (deltaY < -20) {
+      // ✅ سحب للأعلى - قفز
+      bool isLongJump = deltaY.abs() > 80;
+      _character!.jump(isLongJump: isLongJump);
+      _createJumpParticles(_character!.x, _character!.y + 0.05);
+      AudioService().playJumpSound();
+    } else if (deltaY > 20 && _character!.isJumping) {
+      // ✅ سحب للأسفل أثناء القفز - تسريع الهبوط
+      _character!.velocityY += 0.005 * (deltaY / 50).abs();
+    }
+  }
+
   // === إدارة اللعبة ===
   void pauseGame() {
     if (!_isGameRunning) return;
 
     _isGameRunning = false;
-    _stopAllTimers(); // ✅ هذه الدالة موجودة بالفعل
-
-    // print('⏸️ Game paused - Score: $_score, Health: ${_character?.health}');
+    _stopAllTimers();
   }
 
   void resumeGame() {
     if (_isGameRunning || _levelCompleted) return;
 
     _isGameRunning = true;
-    _startGameLoop(); // ✅ هذه الدالة موجودة بالفعل
-    _startSpawners(); // ✅ هذه الدالة موجودة بالفعل
-
-    // print('▶️ Game resumed - Score: $_score, Health: ${_character?.health}');
+    _startGameLoop();
+    _startSpawners();
   }
 
   void _completeLevel() {
@@ -1894,60 +1388,30 @@ class GameEngine {
   }
 
   void _gameOver() {
-    // ✅ منع الاستدعاء المزدوج بشكل أكثر فعالية
     if (!_isGameRunning || _levelCompleted) return;
-
-    print('🎮 Game Over triggered - Score: $_score, Level: ${levelData.levelNumber}');
 
     _isGameRunning = false;
     _levelCompleted = false;
     _stopAllTimers();
 
-    // ✅ إيقاف جميع المؤثرات الصوتية بشكل آمن
-    try {
-      AudioService().playGameOverSound();
-      AudioService().stopBackgroundMusic();
-    } catch (e) {
-      print('❌ Audio error in gameOver: $e');
-    }
+    AudioService().playGameOverSound();
+    AudioService().stopBackgroundMusic();
+    VibrationService.vibrateGameOver();
 
-    // ✅ الاهتزاز مع معالجة الأخطاء
-    try {
-      VibrationService.vibrateGameOver();
-    } catch (e) {
-      print('❌ Vibration error: $e');
-    }
-
-    // ✅ حفظ التقدم بشكل غير متزامن
     _saveGameProgress();
-
-    // ✅ استدعاء callback بعد التأكد من اكتمال التحديثات
     _callGameOverCallback();
   }
 
   void _callGameOverCallback() {
-    // ✅ استخدام addPostFrameCallback لأمان أكثر
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (onGameOver != null) {
-        try {
-          onGameOver!();
-          print('✅ GameOver callback executed successfully');
-        } catch (e) {
-          print('❌ Error in GameOver callback: $e');
-        }
-      } else {
-        print('⚠️ GameOver callback is null');
+        onGameOver!();
       }
     });
   }
 
   void _saveGameProgress() async {
-    try {
-      await GameDataService.saveGameProgress(_score, levelData.levelNumber);
-      print('💾 Game progress saved successfully');
-    } catch (e) {
-      print('❌ Error saving game progress: $e');
-    }
+    await GameDataService.saveGameProgress(_score, levelData.levelNumber);
   }
 
   void _resetGameState() {
@@ -1967,6 +1431,7 @@ class GameEngine {
     _showTutorialArrows = true;
     _showGroundText = true;
     _showBossAttackHint = false;
+    _showTutorialInstructions = true;
     _isBossFight = false;
     _isBossDefeated = false;
     _currentBoss = null;
@@ -1990,6 +1455,7 @@ class GameEngine {
     _initializePlatforms();
     _startTutorialTimer();
     _startGroundTextTimer();
+    _startTutorialInstructionsTimer();
   }
 
   void _stopAllTimers() {
@@ -2007,14 +1473,14 @@ class GameEngine {
     _groundTextTimer?.cancel();
     _bossHintTimer?.cancel();
     _platformSpawnTimer?.cancel();
+    _tutorialInstructionsTimer?.cancel();
   }
 
   // === المساعدات ===
   void _removeObstacles(List<Obstacle> obstaclesToRemove) {
     for (var obstacle in obstaclesToRemove) {
       _obstacles.remove(obstacle);
-      // ✅ الإصلاح: لا تضيف نقاط أثناء معركة الزعيم
-      if (!_isBossFight) { // ⚠️ أضف هذا الشرط!
+      if (!_isBossFight) {
         _score += (10 * _comboMultiplier).toInt();
         _checkLevelUp();
       }
@@ -2082,16 +1548,6 @@ class GameEngine {
   }
 
   // === الألوان والرموز ===
-  Color _getRandomObstacleColor() {
-    final colors = [Colors.red, Colors.orange, Colors.purple, Colors.brown, Colors.green, Colors.blue];
-    return colors[_random.nextInt(colors.length)];
-  }
-
-  IconData _getRandomObstacleIcon() {
-    final icons = [Icons.warning, Icons.block, Icons.dangerous, Icons.error, Icons.arrow_upward, Icons.arrow_downward];
-    return icons[_random.nextInt(icons.length)];
-  }
-
   Color _getPowerUpColor(PowerUpType type) {
     switch (type) {
       case PowerUpType.points: return Colors.amber;

@@ -1,8 +1,9 @@
 import 'dart:math';
 import '../models/Boss.dart';
 
-
 class BossManager {
+  final Random _random = Random();
+
   Boss createBoss(int level, bool isRare, bool isFinal) {
     final health = _calculateBossHealth(level, isRare, isFinal);
     final attackSpeed = _calculateBossAttackSpeed(level, isRare, isFinal);
@@ -14,39 +15,39 @@ class BossManager {
       health: health,
       maxHealth: health,
       attackSpeed: attackSpeed,
-      moveSpeed: 0.008 + (level * 0.0002),
+      moveSpeed: 0.006 + (level * 0.0001), // ✅ سرعة متوازنة
       imagePath: imagePath,
       level: level,
       isRare: isRare,
       isFinalBoss: isFinal,
-      isMovingRight: Random().nextBool(),
-      isMovingUp: Random().nextBool(),
-      verticalMoveSpeed: 0.005 + Random().nextDouble() * 0.006,
-      horizontalMoveSpeed: 0.006 + Random().nextDouble() * 0.008,
+      isMovingRight: _random.nextBool(),
+      isMovingUp: _random.nextBool(),
+      verticalMoveSpeed: 0.003 + _random.nextDouble() * 0.003, // ✅ سرعات معقولة
+      horizontalMoveSpeed: 0.004 + _random.nextDouble() * 0.004,
     );
   }
 
   int _calculateBossHealth(int level, bool isRare, bool isFinal) {
-    int baseHealth = 100 + (level * 25);
+    int baseHealth = 80 + (level * 20); // ✅ صحة متوازنة
 
     if (isFinal) {
-      return 5000;
+      return 3000; // ✅ صحة نهائية معقولة
     } else if (isRare) {
-      return (baseHealth * 1.8).toInt();
+      return (baseHealth * 1.5).toInt(); // ✅ مضاعفة معقولة
     } else {
       return baseHealth;
     }
   }
 
   double _calculateBossAttackSpeed(int level, bool isRare, bool isFinal) {
-    double baseAttackSpeed = 2.0 - (level * 0.015);
+    double baseAttackSpeed = 2.5 - (level * 0.02); // ✅ سرعة هجوم متوازنة
 
     if (isFinal) {
-      return 0.4;
+      return 0.8; // ✅ سرعة معقولة للبوس النهائي
     } else if (isRare) {
-      return baseAttackSpeed * 0.6;
+      return baseAttackSpeed * 0.8; // ✅ تحسين معقول
     } else {
-      return baseAttackSpeed.clamp(0.3, 2.0);
+      return baseAttackSpeed.clamp(0.5, 2.5); // ✅ حدود معقولة
     }
   }
 

@@ -44,7 +44,7 @@ class Obstacle {
     x -= speed; // ✅ هذا يحرك المنصة نحو اليسار (نحو الشخصية)
     // يمكنك إضافة طباعة للتأكد من الحركة
     if (speed > 0 && x % 0.1 < 0.01) {
-      print('🔄 Platform moving - X: ${x.toStringAsFixed(3)}, Speed: $speed');
+      // print('🔄 Platform moving - X: ${x.toStringAsFixed(3)}, Speed: $speed');
     }
   }
 
@@ -79,7 +79,7 @@ class Obstacle {
   void takeDamage(int damage) {
     health -= damage;
     if (health < 0) health = 0;
-    print('💥 ${isEnemy ? 'Enemy' : 'Obstacle'} took $damage damage! Health: $health/$maxHealth');
+    // print('💥 ${isEnemy ? 'Enemy' : 'Obstacle'} took $damage damage! Health: $health/$maxHealth');
   }
 
   bool get isDead => health <= 0;
