@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/ads_service.dart';
+import '../services/game_data_service.dart';
 import '../services/settings_service.dart';
 import '../Languages/LanguageProvider.dart';
 import '../Languages/localization.dart';
 import 'main_menu_screen.dart';
+import 'items_screen.dart';
+import '../models/character_model.dart';
 
 class StoreScreen extends StatefulWidget {
   const StoreScreen({super.key});
@@ -18,99 +21,20 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   late AnimationController _languageAnimationController;
   late Animation<double> _languageScaleAnimation;
 
-  // ✅ نفس إعدادات الحجم والظل من الشكل المطلوب
-  double cornerShadowBlur = 10.0;
-  double cornerShadowSpread = 2.0;
-  Color cornerShadowColor = Colors.black.withOpacity(0.5);
-  Offset cornerShadowOffset = const Offset(2, 2);
-  double cornerIconSize = 50.0;
-  double cornerButtonSize = 60.0;
+  // ✅ إعدادات التصميم المحسنة
+  final double _cornerShadowBlur = 10.0;
+  final double _cornerShadowSpread = 2.0;
+  final Color _cornerShadowColor = Colors.black.withOpacity(0.5);
+  final Offset _cornerShadowOffset = const Offset(2, 2);
+  final double _cornerIconSize = 50.0;
+  final double _cornerButtonSize = 60.0;
 
-  // بيانات الشخصيات الافتراضية
-  final List<Character> characters = [
-    Character(
-      id: 1,
-      name: 'المحارب',
-      imagePath: 'assets/images/characters/warrior.png',
-      price: 100,
-      isLocked: false,
-      color: Colors.blue,
-    ),
-    Character(
-      id: 2,
-      name: 'الساحر',
-      imagePath: 'assets/images/characters/wizard.png',
-      price: 200,
-      isLocked: true,
-      color: Colors.purple,
-    ),
-    Character(
-      id: 3,
-      name: 'اللص',
-      imagePath: 'assets/images/characters/thief.png',
-      price: 300,
-      isLocked: true,
-      color: Colors.green,
-    ),
-    Character(
-      id: 4,
-      name: 'الفارس',
-      imagePath: 'assets/images/characters/knight.png',
-      price: 400,
-      isLocked: true,
-      color: Colors.red,
-    ),
-    Character(
-      id: 5,
-      name: 'الرامي',
-      imagePath: 'assets/images/characters/archer.png',
-      price: 500,
-      isLocked: true,
-      color: Colors.orange,
-    ),
-    Character(
-      id: 6,
-      name: 'العملاق',
-      imagePath: 'assets/images/characters/giant.png',
-      price: 600,
-      isLocked: true,
-      color: Colors.brown,
-    ),
-    Character(
-      id: 7,
-      name: 'التنين',
-      imagePath: 'assets/images/characters/dragon.png',
-      price: 700,
-      isLocked: true,
-      color: Colors.deepOrange,
-    ),
-    Character(
-      id: 8,
-      name: 'الفينيكس',
-      imagePath: 'assets/images/characters/phoenix.png',
-      price: 800,
-      isLocked: true,
-      color: Colors.yellow,
-    ),
-    Character(
-      id: 9,
-      name: 'الأسطورة',
-      imagePath: 'assets/images/characters/legend.png',
-      price: 900,
-      isLocked: true,
-      color: Colors.cyan,
-    ),
-    Character(
-      id: 10,
-      name: 'الإله',
-      imagePath: 'assets/images/characters/god.png',
-      price: 1000,
-      isLocked: true,
-      color: Colors.indigo,
-    ),
-  ];
-
-  int userPoints = 350; // النقاط الحالية للمستخدم
+  // ✅ حالة التطبيق المحسنة
+  List<GameCharacter> _characters = [];
+  int _userPoints = 1000;
+  GameCharacter? _selectedCharacter;
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -118,6 +42,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     _settingsService = SettingsService();
     _settingsService.addListener(_onSettingsChanged);
     _initLanguageAnimation();
+    _loadData();
+
+    // ✅ تسجيل استجابة لتحديثات البيانات
+    GameDataService().addUpdateListener(_onDataUpdated);
+  }
+
+  void _onDataUpdated() {
+    print('🔄 StoreScreen - تم استلام تحديث البيانات');
+    if (mounted) {
+      _loadData();
+    }
   }
 
   void _initLanguageAnimation() {
@@ -135,45 +70,137 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     ));
   }
 
+  // ✅ دالة تحميل البيانات المحسنة - عرض الشخصيات غير المملوكة فقط
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final coins = await GameDataService.getUserCoins();
+      final allCharacters = await GameDataService.getAllCharactersWithLockStatus();
+      final selected = await GameDataService.getSelectedCharacter();
+
+      // ✅ عرض الشخصيات غير المملوكة فقط في المتجر
+      final availableCharacters = allCharacters.where((char) => char.isLocked).toList();
+
+      if (availableCharacters.isEmpty) {
+        throw Exception(AppLocalizations.of(context).noCharactersAvailable);
+      }
+
+      print('🔄 StoreScreen - النقاط: $coins, الشخصيات المتاحة: ${availableCharacters.length}');
+
+      setState(() {
+        _userPoints = coins;
+        _characters = availableCharacters; // ✅ فقط الشخصيات غير المملوكة
+        _selectedCharacter = selected;
+        _isLoading = false;
+      });
+
+    } catch (e) {
+      print('❌ خطأ في StoreScreen._loadData: $e');
+      _handleLoadError();
+    }
+  }
+
+  void _handleLoadError() {
+    setState(() {
+      _characters = [];
+      _selectedCharacter = GameCharacter.getDefaultCharacter();
+      _isLoading = false;
+      _errorMessage = AppLocalizations.of(context).characterLoadError;
+    });
+  }
+
   @override
   void dispose() {
     _settingsService.removeListener(_onSettingsChanged);
     _languageAnimationController.dispose();
+    GameDataService().removeUpdateListener(_onDataUpdated);
     super.dispose();
   }
 
-  void _onSettingsChanged() {
-    setState(() {});
-  }
+  void _onSettingsChanged() => setState(() {});
 
-  // ✅ دالة شراء الشخصية
-  void _purchaseCharacter(Character character) {
+  // ✅ دالة شراء الشخصية المحسنة مع الترجمة الكاملة
+  Future<void> _purchaseCharacter(GameCharacter character) async {
     final l10n = AppLocalizations.of(context);
 
-    if (userPoints >= character.price) {
-      setState(() {
-        userPoints -= character.price;
-        character.isLocked = false;
-      });
-
-      // إظهار رسالة نجاح الشراء
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${l10n.purchasedSuccessfully} ${character.name}!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      // إظهار رسالة عدم كفاية النقاط
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.insufficientPoints),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    final currentCoins = await GameDataService.getUserCoins();
+    if (currentCoins < character.price) {
+      _showSnackBar(l10n.insufficientPoints, Colors.red);
+      return;
     }
+
+    final isOwned = await GameDataService.isCharacterOwned(character.id);
+    if (isOwned) {
+      _showSnackBar(l10n.characterAlreadyOwned, Colors.orange);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            l10n.confirmPurchase,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 24),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                character.imagePath,
+                width: 80,
+                height: 80,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.person, size: 80, color: character.color),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.purchaseConfirmation(character.name, character.price),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel, style: const TextStyle(color: Colors.white)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final success = await GameDataService.purchaseCharacter(character);
+
+                if (success) {
+                  _showSnackBar(l10n.purchaseSuccess(character.name), Colors.green);
+                } else {
+                  _showSnackBar(l10n.purchaseFailed, Colors.red);
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text(l10n.confirm, style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ✅ دالة عرض الإشعارات المحسنة
+  void _showSnackBar(String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   // ✅ دالة شراء نقاط جديدة
@@ -193,24 +220,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildPointsOption('100 نقطة', '10.00', 100),
+              _buildPointsOption('100 ${l10n.coins}', '10.00', 100, l10n),
               const SizedBox(height: 10),
-              _buildPointsOption('500 نقطة', '45.00', 500),
+              _buildPointsOption('500 ${l10n.coins}', '45.00', 500, l10n),
               const SizedBox(height: 10),
-              _buildPointsOption('1000 نقطة', '80.00', 1000),
+              _buildPointsOption('1000 ${l10n.coins}', '80.00', 1000, l10n),
               const SizedBox(height: 10),
-              _buildPointsOption('5000 نقطة', '350.00', 5000),
+              _buildPointsOption('5000 ${l10n.coins}', '350.00', 5000, l10n),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                l10n.aboutCancel,
-                style: const TextStyle(color: Colors.white),
-              ),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel, style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -218,7 +240,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildPointsOption(String title, String price, int points) {
+  Widget _buildPointsOption(String title, String price, int points, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -242,7 +264,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
               ),
               Text(
-                '$price ريال',
+                '$price ${l10n.locale.languageCode == 'ar' ? 'ريال' : 'SAR'}',
                 style: const TextStyle(
                   color: Colors.yellow,
                   fontSize: 16,
@@ -251,26 +273,21 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             ],
           ),
           ElevatedButton(
-            onPressed: () {
-              // هنا سيتم دمج نظام الدفع
+            onPressed: () async {
+              await GameDataService.addCharacterCoins(points);
               setState(() {
-                userPoints += points;
+                _userPoints += points;
               });
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('تم شراء $points نقطة بنجاح!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              _showSnackBar('${l10n.purchasedSuccessfully} $points ${l10n.coins}!', Colors.green);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
-            child: const Text(
-              'شراء',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            child: Text(
+              l10n.buyNow,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -304,7 +321,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               ),
               const SizedBox(height: 10),
               Text(
-                l10n.watchAdForPoints,
+                l10n.watchAdForCoins,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.orange,
@@ -321,32 +338,21 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       onAdStarted: () {
         Navigator.pop(context);
       },
-      onAdCompleted: () {
+      onAdCompleted: () async {
+        await GameDataService.addCharacterCoins(20);
         setState(() {
-          userPoints += 50; // منح 50 نقطة بعد مشاهدة الإعلان
+          _userPoints += 20;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('🎉 حصلت على 50 نقطة مجانية!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        _showSnackBar(l10n.coinsAdded(20), Colors.green);
       },
       onAdFailed: (error) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('❌ فشل تحميل الإعلان، حاول مرة أخرى'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        _showSnackBar(l10n.adFailed, Colors.red);
       },
     );
   }
 
-  // ✅ زر تبديل اللغة - بنفس تصميم الشكل المطلوب
+  // ✅ زر تبديل اللغة المحسن
   Widget _buildLanguageToggleButton() {
     return GestureDetector(
       onTap: () {
@@ -354,8 +360,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         _toggleLanguage(languageProvider);
       },
       child: Container(
-        width: cornerButtonSize,
-        height: cornerButtonSize,
+        width: _cornerButtonSize,
+        height: _cornerButtonSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.01),
@@ -365,10 +371,10 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           ),
           boxShadow: [
             BoxShadow(
-              color: cornerShadowColor,
-              blurRadius: cornerShadowBlur,
-              spreadRadius: cornerShadowSpread,
-              offset: cornerShadowOffset,
+              color: _cornerShadowColor,
+              blurRadius: _cornerShadowBlur,
+              spreadRadius: _cornerShadowSpread,
+              offset: _cornerShadowOffset,
             ),
           ],
         ),
@@ -385,24 +391,23 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  // ✅ أيقونة اللغة الإنجليزية - بنفس تصميم الشكل المطلوب
   Widget _buildEnglishIcon() {
     return Image.asset(
       'assets/images/main_menu/english_icon.png',
-      width: cornerIconSize,
-      height: cornerIconSize,
+      width: _cornerIconSize,
+      height: _cornerIconSize,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          width: cornerIconSize,
-          height: cornerIconSize,
+          width: _cornerIconSize,
+          height: _cornerIconSize,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF012169), Color(0xFFC8102E)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(cornerIconSize / 2),
+            borderRadius: BorderRadius.circular(_cornerIconSize / 2),
           ),
           child: const Center(
             child: Text(
@@ -419,20 +424,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  // ✅ أيقونة اللغة العربية - بنفس تصميم الشكل المطلوب
   Widget _buildArabicIcon() {
     return Image.asset(
       'assets/images/main_menu/arabic_icon.png',
-      width: cornerIconSize,
-      height: cornerIconSize,
+      width: _cornerIconSize,
+      height: _cornerIconSize,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          width: cornerIconSize,
-          height: cornerIconSize,
+          width: _cornerIconSize,
+          height: _cornerIconSize,
           decoration: BoxDecoration(
             color: const Color(0xFF006233),
-            borderRadius: BorderRadius.circular(cornerIconSize / 2),
+            borderRadius: BorderRadius.circular(_cornerIconSize / 2),
           ),
           child: const Center(
             child: Text(
@@ -456,6 +460,14 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     await _languageAnimationController.reverse();
   }
 
+  // ✅ الانتقال إلى شاشة الشخصيات
+  void _goToCharacters() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const itemsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -465,15 +477,76 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ الهيدر - شريط العودة واللغة والنقاط
             _buildHeaderSection(l10n),
-
-            // ✅ قسم النقاط وشراء النقاط
             _buildPointsSection(l10n),
+            if (_isLoading) _buildLoadingState(l10n),
+            if (_errorMessage.isNotEmpty) _buildErrorState(l10n),
+            if (!_isLoading && _errorMessage.isEmpty)
+              Expanded(child: _buildCharactersGrid(l10n)),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // ✅ قائمة الشخصيات
-            Expanded(
-              child: _buildCharactersGrid(),
+  Widget _buildLoadingState(AppLocalizations l10n) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              color: Colors.orange,
+              strokeWidth: 4,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.loadingCharacters,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(AppLocalizations l10n) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                l10n.retry,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -494,7 +567,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ✅ زر العودة للشاشة الرئيسية
           GestureDetector(
             onTap: () {
               Navigator.pushAndRemoveUntil(
@@ -504,8 +576,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               );
             },
             child: Container(
-              width: cornerButtonSize,
-              height: cornerButtonSize,
+              width: _cornerButtonSize,
+              height: _cornerButtonSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.1),
@@ -515,10 +587,10 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: cornerShadowColor,
-                    blurRadius: cornerShadowBlur,
-                    spreadRadius: cornerShadowSpread,
-                    offset: cornerShadowOffset,
+                    color: _cornerShadowColor,
+                    blurRadius: _cornerShadowBlur,
+                    spreadRadius: _cornerShadowSpread,
+                    offset: _cornerShadowOffset,
                   ),
                 ],
               ),
@@ -530,7 +602,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             ),
           ),
 
-          // ✅ عنوان المتجر
           Text(
             l10n.characterStore,
             style: const TextStyle(
@@ -547,7 +618,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             ),
           ),
 
-          // ✅ زر اللغة
           _buildLanguageToggleButton(),
         ],
       ),
@@ -572,12 +642,11 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       ),
       child: Column(
         children: [
-          // ✅ النقاط الحالية
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n.yourPoints,
+                l10n.yourCoins,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -600,7 +669,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                   ],
                 ),
                 child: Text(
-                  '$userPoints 💎',
+                  '$_userPoints 💎',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -613,7 +682,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
           const SizedBox(height: 15),
 
-          // ✅ أزرار شراء النقاط ومشاهدة الإعلان
           Row(
             children: [
               Expanded(
@@ -632,7 +700,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       const Icon(Icons.shopping_cart, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(
-                        l10n.buyPoints,
+                        l10n.buyCoins,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -673,12 +741,69 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.purple, Colors.deepPurple],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _goToCharacters,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.person, color: Colors.white, size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    l10n.goToCharacters,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          blurRadius: 4,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCharactersGrid() {
+  Widget _buildCharactersGrid(AppLocalizations l10n) {
+    if (_characters.isEmpty) {
+      return _buildEmptyCharactersState(l10n);
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -687,33 +812,75 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         mainAxisSpacing: 16,
         childAspectRatio: 0.8,
       ),
-      itemCount: characters.length,
+      itemCount: _characters.length,
       itemBuilder: (context, index) {
-        return _buildCharacterCard(characters[index]);
+        return _buildCharacterCard(_characters[index], l10n);
       },
     );
   }
 
-  Widget _buildCharacterCard(Character character) {
+  Widget _buildEmptyCharactersState(AppLocalizations l10n) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.person_off,
+            size: 80,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.allCharactersPurchased,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[400],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.noCharactersAvailable,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _goToCharacters,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              l10n.goToMarketplace,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCharacterCard(GameCharacter character, AppLocalizations l10n) {
     return GestureDetector(
-      onTap: () {
-        if (!character.isLocked) {
-          _showCharacterDetails(character);
-        }
-      },
+      onTap: () => _showCharacterDetails(character, l10n),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey[900]!.withOpacity(0.8),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: character.isLocked ? Colors.grey : character.color,
+            color: character.color,
             width: 3,
           ),
           boxShadow: [
             BoxShadow(
-              color: character.isLocked
-                  ? Colors.grey.withOpacity(0.3)
-                  : character.color.withOpacity(0.5),
+              color: character.color.withOpacity(0.5),
               blurRadius: 15,
               spreadRadius: 2,
             ),
@@ -721,17 +888,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         ),
         child: Stack(
           children: [
-            // ✅ صورة الشخصية
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(17),
-                child: character.isLocked
-                    ? _buildLockedCharacter(character)
-                    : _buildUnlockedCharacter(character),
+                child: _buildLockedCharacter(character),
               ),
             ),
 
-            // ✅ معلومات الشخصية
             Positioned(
               bottom: 0,
               left: 0,
@@ -755,66 +918,59 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 child: Column(
                   children: [
                     Text(
-                      character.name,
-                      style: TextStyle(
+                      character.getName(l10n.locale.languageCode),
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: character.isLocked ? Colors.grey : Colors.white,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 5),
-                    if (character.isLocked)
-                      _buildPurchaseButton(character)
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Text(
-                          'مملوكة',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                    const SizedBox(height: 8),
+                    _buildPurchaseButton(character, l10n),
                   ],
                 ),
               ),
             ),
 
-            // ✅ قفل إذا كانت مقفلة
-            if (character.isLocked)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${character.price}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(
+                      Icons.diamond,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ],
                 ),
               ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLockedCharacter(Character character) {
+  Widget _buildLockedCharacter(GameCharacter character) {
     return Stack(
       children: [
-        // ✅ خلفية ملونة مع تدرج
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -828,7 +984,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           ),
         ),
 
-        // ✅ أيقونة بديلة
         Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -839,7 +994,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 color: character.color.withOpacity(0.5),
               ),
               const SizedBox(height: 10),
-              Text(
+              const Text(
                 '🔒',
                 style: TextStyle(fontSize: 24),
               ),
@@ -847,7 +1002,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           ),
         ),
 
-        // ✅ طبقة داكنة
         Container(
           color: Colors.black.withOpacity(0.6),
         ),
@@ -855,69 +1009,16 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildUnlockedCharacter(Character character) {
-    return Stack(
-      children: [
-        // ✅ خلفية ملونة
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                character.color.withOpacity(0.4),
-                character.color.withOpacity(0.1),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
+  Widget _buildPurchaseButton(GameCharacter character, AppLocalizations l10n) {
+    final canPurchase = _userPoints >= character.price;
 
-        // ✅ صورة الشخصية (ستحتاج لإضافة الصور في assets)
-        Center(
-          child: Image.asset(
-            character.imagePath,
-            width: 80,
-            height: 80,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Icon(
-                Icons.person,
-                size: 80,
-                color: character.color,
-              );
-            },
-          ),
-        ),
-
-        // ✅ تأثير لامع
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(17),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.1),
-                  Colors.transparent,
-                  Colors.white.withOpacity(0.05),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPurchaseButton(Character character) {
     return GestureDetector(
       onTap: () => _purchaseCharacter(character),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          gradient: userPoints >= character.price
+          gradient: canPurchase
               ? const LinearGradient(
             colors: [Colors.orange, Colors.yellow],
           )
@@ -927,7 +1028,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: userPoints >= character.price
+              color: canPurchase
                   ? Colors.orange.withOpacity(0.5)
                   : Colors.grey.withOpacity(0.3),
               blurRadius: 8,
@@ -939,18 +1040,18 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${character.price}',
+              l10n.buyNow,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: userPoints >= character.price ? Colors.black : Colors.white,
+                color: canPurchase ? Colors.black : Colors.white,
               ),
             ),
             const SizedBox(width: 4),
             Icon(
               Icons.diamond,
               size: 16,
-              color: userPoints >= character.price ? Colors.blue : Colors.grey,
+              color: canPurchase ? Colors.blue : Colors.grey,
             ),
           ],
         ),
@@ -958,14 +1059,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  void _showCharacterDetails(Character character) {
+  void _showCharacterDetails(GameCharacter character, AppLocalizations l10n) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final currentLanguage = languageProvider.isArabic ? 'ar' : 'en';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width * 0.9,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -982,7 +1086,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ✅ صورة الشخصية
                 Container(
                   width: 120,
                   height: 120,
@@ -1017,9 +1120,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
                 const SizedBox(height: 20),
 
-                // ✅ اسم الشخصية
                 Text(
-                  character.name,
+                  character.getName(currentLanguage),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -1027,11 +1129,28 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                   ),
                 ),
 
+                const SizedBox(height: 10),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: character.color.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Text(
+                    '${l10n.characterType}: ${character.type}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 15),
 
-                // ✅ وصف الشخصية
                 Text(
-                  'هذه الشخصية تمتلك قدرات خاصة ومميزات فريدة في اللعبة.',
+                  character.getDescription(currentLanguage),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -1039,47 +1158,87 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                   ),
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 20),
 
-                // ✅ زر الاختيار
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    // هنا يمكن إضافة دورة اختيار الشخصية
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('تم اختيار ${character.name}!'),
-                        backgroundColor: Colors.green,
+                Text(
+                  l10n.characterAbilities,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: character.abilities.map((ability) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        ability,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 25),
+
+                ElevatedButton(
+                  onPressed: () {
+                    _purchaseCharacter(character);
+                    Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: character.color,
+                    backgroundColor: _userPoints >= character.price ? Colors.orange : Colors.grey,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
-                    'اختيار الشخصية',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.buyNow,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${character.price}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Icon(Icons.diamond, size: 20, color: Colors.white),
+                    ],
                   ),
                 ),
 
                 const SizedBox(height: 10),
 
-                // ✅ زر الإغلاق
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text(
-                    'إغلاق',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.close,
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
                     ),
@@ -1092,23 +1251,4 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       },
     );
   }
-}
-
-// ✅ نموذج بيانات الشخصية
-class Character {
-  final int id;
-  final String name;
-  final String imagePath;
-  final int price;
-  bool isLocked;
-  final Color color;
-
-  Character({
-    required this.id,
-    required this.name,
-    required this.imagePath,
-    required this.price,
-    required this.isLocked,
-    required this.color,
-  });
 }

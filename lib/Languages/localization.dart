@@ -248,6 +248,34 @@ class AppLocalizations {
       "noCharactersOwned": "لا تمتلك أي شخصيات بعد",
       "allCharactersOwned": "جميع الشخصيات مملوكة",
       "buyCoinsNow": "اشتري عملات الان",
+      "choseCharacter": "قائمة الشخصيات",
+      "choseAnotherCharacter": "اختر شخصية اخرى من القائمة",
+      "confirmPurchase": "تأكيد الشراء",
+      "purchaseConfirmation": "هل تريد شراء %s بـ %d نقطة؟",
+      "characterAlreadyOwned": "هذه الشخصية مملوكة بالفعل!",
+      "purchaseSuccess": "✅ تم شراء %s بنجاح!",
+      "purchaseFailed": "❌ فشل في شراء الشخصية",
+      "owned": "مملوكة",
+      "selected": "مختارة ✓",
+      "buyNow": "اشتري الان",
+      "select": "اختر",
+      "characters": "الشخصيات",
+      "loadingCharacters": "جاري تحميل الشخصيات...",
+      "noCharactersAvailable": "لا توجد شخصيات متاحة",
+      "characterLoadError": "حدث خطأ في تحميل الشخصيات",
+      "goToCharacters": "👥 قائمة الشخصيات",
+      "watchAdForCoins": "شاهد إعلان للحصول على 20 عملة مجانية",
+      "coinsAdded": "🎉 حصلت على %d عملة مجانية!",
+      "adFailed": "❌ فشل تحميل الإعلان، حاول مرة أخرى",
+      "buyCoins": "شراء عملات",
+      "yourCoins": "العملات التي لديك",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "characterDetails": "تفاصيل الشخصية",
+      "characterType": "النوع",
+      "characterAbilities": "القدرات",
+      "allCharactersPurchased": "لقد اشتريت جميع الشخصيات!",
+      "goToMarketplace": "🛒 اذهب للمتجر",
     },
     'en': {
       "PrivacyPolicy": "Privacy Policy",
@@ -482,11 +510,70 @@ class AppLocalizations {
       "availableForPurchase": "Available for Purchase",
       "noCharactersOwned": "No characters owned yet",
       "allCharactersOwned": "All characters owned",
-      "buyCoinsNow": "Buy Coins Now"
+      "buyCoinsNow": "Buy Coins Now",
+      "choseCharacter": "List of characters",
+      "choseAnotherCharacter": "Select another character from the list",
+      "confirmPurchase": "Confirm Purchase",
+      "purchaseConfirmation": "Do you want to purchase %s for %d coins?",
+      "characterAlreadyOwned": "This character is already owned!",
+      "purchaseSuccess": "✅ Successfully purchased %s!",
+      "purchaseFailed": "❌ Failed to purchase character",
+      "owned": "Owned",
+      "selected": "Selected ✓",
+      "buyNow": "Buy Now",
+      "select": "Select",
+      "characters": "Characters",
+      "loadingCharacters": "Loading characters...",
+      "noCharactersAvailable": "No characters available",
+      "characterLoadError": "Error loading characters",
+      "goToCharacters": "👥 Characters List",
+      "watchAdForCoins": "Watch ad to get 20 free coins",
+      "coinsAdded": "🎉 You got %d free coins!",
+      "adFailed": "❌ Failed to load ad, please try again",
+      "buyCoins": "Buy Coins",
+      "yourCoins": "Your Coins",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "characterDetails": "Character Details",
+      "characterType": "Type",
+      "characterAbilities": "Abilities",
+      "allCharactersPurchased": "You've purchased all characters!",
+      "goToMarketplace": "🛒 Go to Store"
     },
   };
 
   // ✅ تعريف الـ getters
+  String get confirmPurchase => _localizedValues[locale.languageCode]!['confirmPurchase']!;
+  String purchaseConfirmation(String characterName, int price) => _localizedValues[locale.languageCode]!['purchaseConfirmation']!.replaceFirst('%s', characterName).replaceFirst('%d', price.toString());
+  String get characterAlreadyOwned => _localizedValues[locale.languageCode]!['characterAlreadyOwned']!;
+  String purchaseSuccess(String characterName) => _localizedValues[locale.languageCode]!['purchaseSuccess']!.replaceFirst('%s', characterName);
+  String get purchaseFailed => _localizedValues[locale.languageCode]!['purchaseFailed']!;
+  String get owned => _localizedValues[locale.languageCode]!['owned']!;
+  String get selected => _localizedValues[locale.languageCode]!['selected']!;
+  String get buyNow => _localizedValues[locale.languageCode]!['buyNow']!;
+  String get select => _localizedValues[locale.languageCode]!['select']!;
+  String get characters => _localizedValues[locale.languageCode]!['characters']!;
+  String get loadingCharacters => _localizedValues[locale.languageCode]!['loadingCharacters']!;
+  String get noCharactersAvailable => _localizedValues[locale.languageCode]!['noCharactersAvailable']!;
+  String get characterLoadError => _localizedValues[locale.languageCode]!['characterLoadError']!;
+  String get retry => _localizedValues[locale.languageCode]!['retry']!;
+  String get goToCharacters => _localizedValues[locale.languageCode]!['goToCharacters']!;
+  String get watchAdForCoins => _localizedValues[locale.languageCode]!['watchAdForCoins']!;
+  String coinsAdded(int coins) => _localizedValues[locale.languageCode]!['coinsAdded']!.replaceFirst('%d', coins.toString());
+  String get adFailed => _localizedValues[locale.languageCode]!['adFailed']!;
+  String get buyCoins => _localizedValues[locale.languageCode]!['buyCoins']!;
+  String get watchAd => _localizedValues[locale.languageCode]!['watchAd']!;
+  String get yourCoins => _localizedValues[locale.languageCode]!['yourCoins']!;
+  String get confirm => _localizedValues[locale.languageCode]!['confirm']!;
+  String get cancel => _localizedValues[locale.languageCode]!['cancel']!;
+  String get characterDetails => _localizedValues[locale.languageCode]!['characterDetails']!;
+  String get characterType => _localizedValues[locale.languageCode]!['characterType']!;
+  String get characterAbilities => _localizedValues[locale.languageCode]!['characterAbilities']!;
+  String get close => _localizedValues[locale.languageCode]!['close']!;
+  String get allCharactersPurchased => _localizedValues[locale.languageCode]!['allCharactersPurchased']!;
+  String get goToMarketplace => _localizedValues[locale.languageCode]!['goToMarketplace']!;
+  String get choseAnotherCharacter => _localizedValues[locale.languageCode]!['choseAnotherCharacter']!;
+  String get choseCharacter => _localizedValues[locale.languageCode]!['choseCharacter']!;
   String get gameOverSuccess => _localizedValues[locale.languageCode]!['gameOverSuccess']!;
   String get gameOverLevelCompleted => _localizedValues[locale.languageCode]!['gameOverLevelCompleted']!;
   String get gameOverCoinsEarned => _localizedValues[locale.languageCode]!['gameOverCoinsEarned']!;
@@ -560,7 +647,6 @@ class AppLocalizations {
   String get TermsOfUse => _localizedValues[locale.languageCode]!['TermsOfUse']!;
   String get ReadTheTermsOfUse => _localizedValues[locale.languageCode]!['ReadTheTermsOfUse']!;
   String get gameTitle => _localizedValues[locale.languageCode]!['gameTitle']!;
-  String get close => _localizedValues[locale.languageCode]!['close']!;
   String get play => _localizedValues[locale.languageCode]!['play']!;
   String get levels => _localizedValues[locale.languageCode]!['levels']!;
   String get settings => _localizedValues[locale.languageCode]!['settings']!;
@@ -612,7 +698,6 @@ class AppLocalizations {
   String get loadingGame => _localizedValues[locale.languageCode]!['loadingGame']!;
   String get loadingLevels => _localizedValues[locale.languageCode]!['loadingLevels']!;
   String get error => _localizedValues[locale.languageCode]!['error']!;
-  String get retry => _localizedValues[locale.languageCode]!['retry']!;
   String get adError => _localizedValues[locale.languageCode]!['adError']!;
   String get aboutGameSubject1 => _localizedValues[locale.languageCode]!['aboutGameSubject1']!;
   String get aboutGameSubject2 => _localizedValues[locale.languageCode]!['aboutGameSubject2']!;
@@ -701,7 +786,6 @@ class AppLocalizations {
   String get characterStore => _localizedValues[locale.languageCode]!['characterStore']!;
   String get yourPoints => _localizedValues[locale.languageCode]!['yourPoints']!;
   String get buyPoints => _localizedValues[locale.languageCode]!['buyPoints']!;
-  String get watchAd => _localizedValues[locale.languageCode]!['watchAd']!;
   String get purchasedSuccessfully => _localizedValues[locale.languageCode]!['purchasedSuccessfully']!;
   String get insufficientPoints => _localizedValues[locale.languageCode]!['insufficientPoints']!;
   String get watchAdForPoints => _localizedValues[locale.languageCode]!['watchAdForPoints']!;

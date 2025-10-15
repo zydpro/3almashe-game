@@ -47,11 +47,103 @@ flutter:
   generate: true
 
   assets:
-    # === الشخصيات الأساسية ===
-    - assets/images/characters/character_run.png
-    - assets/images/characters/character_jump.png
-    - assets/images/characters/character_duck.png
-    - assets/images/characters/character_attack.png
+    # === أيقونات الشخصيات للعرض في المتجر ===
+    - assets/images/characters/almashe_icon.png
+    - assets/images/characters/rainbow_icon.png
+    - assets/images/characters/arabic_icon.png
+    - assets/images/characters/greek_icon.png
+    - assets/images/characters/snowy_icon.png
+    - assets/images/characters/fiery_icon.png
+    - assets/images/characters/techno_icon.png
+    - assets/images/characters/viking_icon.png
+    - assets/images/characters/comics_icon.png
+    - assets/images/characters/medieval_icon.png
+    - assets/images/characters/warrior_icon.png
+    - assets/images/characters/zombie_icon.png
+
+    # === حركات شخصية عالماشي ===
+    - assets/images/characters/almashe_run.png
+    - assets/images/characters/almashe_jump.png
+    - assets/images/characters/almashe_attack.png
+    - assets/images/characters/almashe_duck.png
+    - assets/images/characters/almashe_idle.png
+
+    # === حركات شخصية ألوان الطيف ===
+    - assets/images/characters/rainbow_run.png
+    - assets/images/characters/rainbow_jump.png
+    - assets/images/characters/rainbow_attack.png
+    - assets/images/characters/rainbow_duck.png
+    - assets/images/characters/rainbow_idle.png
+
+    # === حركات الشخصية العربية ===
+    - assets/images/characters/arabic_run.png
+    - assets/images/characters/arabic_jump.png
+    - assets/images/characters/arabic_attack.png
+    - assets/images/characters/arabic_duck.png
+    - assets/images/characters/arabic_idle.png
+
+    # === حركات الشخصية الإغريقية ===
+    - assets/images/characters/greek_run.png
+    - assets/images/characters/greek_jump.png
+    - assets/images/characters/greek_attack.png
+    - assets/images/characters/greek_duck.png
+    - assets/images/characters/greek_idle.png
+
+    # === حركات الشخصية الثلجية ===
+    - assets/images/characters/snowy_run.png
+    - assets/images/characters/snowy_jump.png
+    - assets/images/characters/snowy_attack.png
+    - assets/images/characters/snowy_duck.png
+    - assets/images/characters/snowy_idle.png
+
+    # === حركات الشخصية النارية ===
+    - assets/images/characters/fiery_run.png
+    - assets/images/characters/fiery_jump.png
+    - assets/images/characters/fiery_attack.png
+    - assets/images/characters/fiery_duck.png
+    - assets/images/characters/fiery_idle.png
+
+    # === حركات الشخصية التقنية ===
+    - assets/images/characters/techno_run.png
+    - assets/images/characters/techno_jump.png
+    - assets/images/characters/techno_attack.png
+    - assets/images/characters/techno_duck.png
+    - assets/images/characters/techno_idle.png
+
+    # === حركات محارب الفايكنج ===
+    - assets/images/characters/viking_run.png
+    - assets/images/characters/viking_jump.png
+    - assets/images/characters/viking_attack.png
+    - assets/images/characters/viking_duck.png
+    - assets/images/characters/viking_idle.png
+
+    # === حركات شخصية الكوميكس ===
+    - assets/images/characters/comics_run.png
+    - assets/images/characters/comics_jump.png
+    - assets/images/characters/comics_attack.png
+    - assets/images/characters/comics_duck.png
+    - assets/images/characters/comics_idle.png
+
+    # === حركات شخصية العصور الوسطى ===
+    - assets/images/characters/medieval_run.png
+    - assets/images/characters/medieval_jump.png
+    - assets/images/characters/medieval_attack.png
+    - assets/images/characters/medieval_duck.png
+    - assets/images/characters/medieval_idle.png
+
+    # === حركات الشخصية المحاربة ===
+    - assets/images/characters/warrior_run.png
+    - assets/images/characters/warrior_jump.png
+    - assets/images/characters/warrior_attack.png
+    - assets/images/characters/warrior_duck.png
+    - assets/images/characters/warrior_idle.png
+
+    # === حركات شخصية الزومبي ===
+    - assets/images/characters/zombie_run.png
+    - assets/images/characters/zombie_jump.png
+    - assets/images/characters/zombie_attack.png
+    - assets/images/characters/zombie_duck.png
+    - assets/images/characters/zombie_idle.png
 
     # === العوائق الأساسية ===
     - assets/images/obstacles/pipe.png

@@ -505,7 +505,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               _buildGameContainer(screenSize, progress, isLevelComplete),
               if (_showComboIndicator) _buildComboIndicator(),
               _buildControlIndicators(isLevelComplete),
-              if (_gameEngine!.showTutorialArrows) _buildTutorialArrows(),
+              // if (_gameEngine!.showTutorialArrows) _buildTutorialArrows(),
               if (_gameEngine!.isBossFight) _buildBossInterface(),
               if (currentLevel.levelNumber == 100 && _gameEngine!.isBossDefeated)
                 _buildGameCompletionOverlay(),
@@ -1150,31 +1150,41 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
   }
 
+  // في GameScreen.dart - تحديث دالة بناء صورة الشخصية
   Widget _buildCharacterImage() {
     try {
+      final character = _gameEngine!.character;
+      String imagePath = _getCharacterImage();
+
+      print('🎨 بناء صورة الشخصية: $imagePath');
+
       return Image.asset(
-        _getCharacterImage(),
+        imagePath,
         width: 80,
         height: 80,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
+          print('❌ خطأ في تحميل صورة الشخصية: $error');
           return _buildFallbackCharacter();
         },
       );
     } catch (e) {
+      print('❌ خطأ في _buildCharacterImage: $e');
       return _buildFallbackCharacter();
     }
   }
 
   String _getCharacterImage() {
     final character = _gameEngine!.character;
-    if (character.isAttacking) {
-      return ImageService.characterAttack;
-    } else if (character.isDucking) {
-      return ImageService.characterDuck;
-    } else if (character.isJumping) {
-      return ImageService.characterJump;
-    } else {
+
+    // ✅ استخدام الصور من GameCharacter مباشرة
+    try {
+      final currentImage = character.getCurrentImage();
+      print('🎨 بناء صورة الشخصية: $currentImage');
+      return currentImage;
+    } catch (e) {
+      print('❌ خطأ في _getCharacterImage: $e');
+      // ✅ الصور الافتراضية الاحتياطية
       return ImageService.characterRun;
     }
   }
@@ -1826,24 +1836,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTutorialArrows() {
-    return Positioned(
-      bottom: 150,
-      left: 0,
-      right: 0,
-      child: Column(
-        children: [
-          _buildTutorialArrow(Icons.arrow_upward, 'اسحب للأعلى للقفز', Colors.green),
-          const SizedBox(height: 20),
-          _buildTutorialArrow(Icons.arrow_downward, 'اسحب لأسفل للانحناء', Colors.blue),
-          if (_gameEngine!.isBossFight) ...[
-            const SizedBox(height: 20),
-            _buildTutorialArrow(Icons.touch_app, 'انقر لرمي الطرود', Colors.orange),
-          ],
-        ],
-      ),
-    );
-  }
+  // Widget _buildTutorialArrows() {
+  //   return Positioned(
+  //     bottom: 150,
+  //     left: 0,
+  //     right: 0,
+  //     child: Column(
+  //       children: [
+  //         _buildTutorialArrow(Icons.arrow_upward, 'اسحب للأعلى للقفز', Colors.green),
+  //         const SizedBox(height: 20),
+  //         _buildTutorialArrow(Icons.arrow_downward, 'اسحب لأسفل للانحناء', Colors.blue),
+  //         if (_gameEngine!.isBossFight) ...[
+  //           const SizedBox(height: 20),
+  //           _buildTutorialArrow(Icons.touch_app, 'انقر لرمي الطرود', Colors.orange),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildTutorialArrow(IconData icon, String text, Color color) {
     return Container(

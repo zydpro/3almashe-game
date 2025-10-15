@@ -1,4 +1,5 @@
 import 'package:almashe_game/screens/splash_screens.dart';
+import 'package:almashe_game/services/game_data_service.dart';
 import 'package:almashe_game/services/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -29,6 +30,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => GameDataService()),
       ],
       child: const AlmasheGame(),
     ),

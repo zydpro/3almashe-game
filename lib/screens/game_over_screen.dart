@@ -1,3 +1,4 @@
+import 'package:almashe_game/screens/items_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Languages/LanguageProvider.dart';
@@ -343,10 +344,10 @@ class GameOverScreen extends StatelessWidget {
 
         // زر قائمة المراحل
         _buildOptionButton(
-          icon: Icons.list,
-          text: l10n.levelsMenu,
-          description: l10n.gameOverLevelsDesc,
-          onTap: () => _showAdAndGoToLevels(context),
+          icon: Icons.directions_run,
+          text: l10n.choseCharacter,
+          description: l10n.choseAnotherCharacter,
+          onTap: () => _showAdAndGoToItemsScreen(context),
           color: Colors.purple,
         ),
         const SizedBox(height: 15),
@@ -481,13 +482,13 @@ class GameOverScreen extends StatelessWidget {
     );
   }
 
-  void _showAdAndGoToLevels(BuildContext context) {
+  void _showAdAndGoToItemsScreen(BuildContext context) {
     _showLoadingDialog(context, AppLocalizations.of(context).loadingAd);
 
     AdsService.showInterstitialAd(
       onAdStarted: () => Navigator.pop(context),
-      onAdCompleted: () => _goToLevels(context),
-      onAdFailed: (error) => _goToLevels(context),
+      onAdCompleted: () => _goToitemsScreen(context),
+      onAdFailed: (error) => _goToitemsScreen(context),
     );
   }
 
@@ -588,10 +589,10 @@ class GameOverScreen extends StatelessWidget {
     );
   }
 
-  void _goToLevels(BuildContext context) {
+  void _goToitemsScreen(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LevelsScreen()),
+      MaterialPageRoute(builder: (context) => const itemsScreen()),
           (route) => false,
     );
   }

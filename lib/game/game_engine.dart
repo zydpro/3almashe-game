@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../managers/enemy_manager.dart';
 import '../models/Boss.dart';
 import '../models/background_elements.dart';
+import '../models/character_model.dart';
 import '../models/enums.dart';
 import '../services/game_data_service.dart';
 import '../models/character.dart';
@@ -145,6 +146,8 @@ class GameEngine {
       weight: 1.1,
     );
 
+    // ✅ تحميل الشخصية المختارة تلقائياً
+    _loadSelectedCharacter();
     _character!.setJumpBounds(0.3, 0.1);
     _backgroundManager.initialize();
     _initializePlatforms();
@@ -153,6 +156,34 @@ class GameEngine {
     _startTutorialTimer();
     _startGroundTextTimer();
     _startTutorialInstructionsTimer();
+  }
+
+  void _loadSelectedCharacter() async {
+    try {
+      final selectedCharacter = await GameDataService.getSelectedCharacter();
+      print('🎮 تحميل الشخصية المختارة: ${selectedCharacter.name} (ID: ${selectedCharacter.id})');
+
+      _character?.setCharacter(selectedCharacter);
+
+      // ✅ التأكد من تحميل الصور بشكل صحيح
+      _preloadCharacterImages(selectedCharacter);
+
+    } catch (e) {
+      print('❌ خطأ في تحميل الشخصية المختارة: $e');
+      // استخدام الشخصية الافتراضية في حالة الخطأ
+      final defaultCharacter = GameCharacter.getDefaultCharacter();
+      _character?.setCharacter(defaultCharacter);
+    }
+  }
+
+  // ✅ دالة مساعدة لتحميل الصور مسبقاً
+  void _preloadCharacterImages(GameCharacter character) {
+    try {
+      // يمكن إضافة منطق لتحميل الصور مسبقاً هنا إذا لزم الأمر
+      print('🖼️ تحميل صور الشخصية: ${character.name}');
+    } catch (e) {
+      print('❌ خطأ في تحميل صور الشخصية: $e');
+    }
   }
 
   void _startTutorialInstructionsTimer() {
