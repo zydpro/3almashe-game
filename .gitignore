@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# تجاهل ملفات الإعدادات الحساسة
+**/livekit_service.dart
+**/firebase_options.dart
+**/.env
+**/.env.*
+**/secrets.dart
+**/keys.dart
+**/*_keys.dart
+
+# تجاهل مجلدات البناء
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.log
+*.lock
